@@ -32,3 +32,7 @@
 //! (e.g. Cortex-M0/M23) are not constant-time for *any* limb code.
 
 // Submodules land one per work item: limb, uint, cmp, select, encoding.
+pub(crate) mod limb;
+
+#[cfg(test)]
+mod tests;

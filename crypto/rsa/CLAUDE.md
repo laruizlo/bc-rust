@@ -34,10 +34,11 @@ commits not in `release`), so let the team's normal `release → main` merge car
 
 - **Bigint is a private module inside this crate** (decided — spec D1). The `bigint` tree lives
   at `src/bigint/` as `mod bigint;` with everything `pub(crate)` — bc-rust does not expose a
-  big-int API. Consequences: unit tests are in-file `#[cfg(test)]` blocks (sanctioned for
-  private code), and benches reach internals via a non-default `bench-internals` feature gating
-  a `#[doc(hidden)] pub mod internals` re-export. It still lands and is reviewed independently
-  (branch ①) before any RSA logic depends on it.
+  big-int API. Consequences: unit tests live in `src/bigint/tests/` (a `#[cfg(test)]` module
+  inside the crate — same private access as in-file blocks, but one test file per module so
+  implementation files stay lean), and benches reach internals via a non-default
+  `bench-internals` feature gating a `#[doc(hidden)] pub mod internals` re-export. It still
+  lands and is reviewed independently (branch ①) before any RSA logic depends on it.
 - **Still open — trait fit for encryption.** PSS / PKCS#1-sig map onto the existing
   `core::Signature` trait. RSA-OAEP encryption fits none of `Hash/KDF/MAC/KEM/Signature` —
   decide in link ③ whether to add a public-key-encryption trait to `core`, or model RSA-KEM
