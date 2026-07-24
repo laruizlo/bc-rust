@@ -66,15 +66,11 @@ impl<const LIMBS: usize> ZeroizablePrimitive for Uint<LIMBS> {
 /// array `==` short-circuits on the first differing limb and leaks the position of
 /// the difference through timing.
 ///
-/// (The mask-returning `ct_eq` in `cmp` becomes the primary internal form and this
-/// impl its convenience wrapper when that module lands.)
+/// The mask-returning `ct_eq` in `cmp` is the primary internal form; this impl is
+/// the `bool` convenience over it for public decision points and tests.
 impl<const LIMBS: usize> PartialEq for Uint<LIMBS> {
     fn eq(&self, other: &Self) -> bool {
-        let mut acc: Word = 0;
-        for i in 0..LIMBS {
-            acc |= core::hint::black_box(self.limbs[i].0 ^ other.limbs[i].0);
-        }
-        acc == 0
+        self.ct_eq(other).to_bool_var()
     }
 }
 impl<const LIMBS: usize> Eq for Uint<LIMBS> {}

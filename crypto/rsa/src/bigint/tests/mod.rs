@@ -9,5 +9,7 @@
 //! RUSTFLAGS="--cfg force_limb32" cargo test -p bouncycastle-rsa
 //! ```
 
+mod cmp;
 mod limb;
+mod select;
 mod uint;
