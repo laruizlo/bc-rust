@@ -1,0 +1,26 @@
+[package]
+name = "bouncycastle-rsa"
+version = "0.1.2"
+edition.workspace = true
+
+[features]
+# Internal, unstable: exposes the private bigint engine to this crate's benches
+# (criterion cannot see pub(crate) items). Never part of the public API; items
+# behind it may change or vanish without notice. See src/lib.rs.
+bench-internals = []
+
+[dependencies]
+bouncycastle-utils.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "rsa_benches"
+harness = false
+required-features = ["bench-internals"]
+
+[lints.rust]
+# The force_limb32 cfg is a test-only escape hatch that forces the 32-bit limb
+# path on 64-bit hosts: RUSTFLAGS="--cfg force_limb32" cargo test -p bouncycastle-rsa
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(force_limb32)"] }
