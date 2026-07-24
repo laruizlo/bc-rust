@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Toolchain
 
-- Uses Rust **nightly** (pinned in `rust-toolchain.toml`) — `core/src/lib.rs` uses `#![feature(adt_const_params)]`.
+- Builds on **stable** Rust — there is no `rust-toolchain.toml` and no active `#![feature(...)]` remains in the tree (the `adt_const_params` uses were removed/commented out). CI's rustfmt job installs *nightly rustfmt* for formatting only.
 - 2024 edition (set workspace-wide in the root `Cargo.toml`).
 
 ## Common commands
@@ -92,4 +92,4 @@ These are non-obvious house rules — follow them when writing or modifying code
 
 ## CI
 
-The only workflow is `.github/workflows/publish_doc_benches_to_ghpages.yaml`: on every PR it builds rustdoc and runs `quality_stats.sh`; on `main` it additionally runs `cargo bench --all` and publishes docs, code stats, and benchmark results to GitHub Pages (`https://bcgit.github.io/bc-rust/`). There is no separate CI test/lint job — local `cargo test` is the gate.
+Two workflows: `.github/workflows/publish_doc_benches_to_ghpages.yaml` — on every PR it builds rustdoc and runs `quality_stats.sh`; on `main` it additionally runs `cargo bench --all` and publishes docs, code stats, and benchmark results to GitHub Pages (`https://bcgit.github.io/bc-rust/`) — and `.github/workflows/rust-style.yml`, which runs `cargo fmt --all --check` (nightly rustfmt) on every PR. There is no CI test job — local `cargo test` is the gate.
