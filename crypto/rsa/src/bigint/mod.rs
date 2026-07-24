@@ -33,6 +33,7 @@
 
 // Submodules land one per work item: limb, uint, cmp, select, encoding.
 pub(crate) mod cmp;
+pub(crate) mod encoding;
 pub(crate) mod limb;
 pub(crate) mod select;
 pub(crate) mod uint;

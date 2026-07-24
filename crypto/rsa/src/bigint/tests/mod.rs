@@ -10,6 +10,7 @@
 //! ```
 
 mod cmp;
+mod encoding;
 mod limb;
 mod select;
 mod uint;
