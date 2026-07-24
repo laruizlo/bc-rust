@@ -1,4 +1,4 @@
-//! RSA (RFC 8017 / PKCS #1 v2.2) — under construction.
+//! RSA (RFC 8017 / PKCS #1 v2.2): under construction.
 //!
 //! This crate currently contains only the private big-integer representation layer
 //! (phase 1 of the implementation plan in `crypto/rsa/specs/`). There is no public

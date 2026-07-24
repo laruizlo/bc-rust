@@ -1,4 +1,4 @@
-//! `Limb` — the machine-word building block of `Uint`, with carry-propagating
+//! `Limb`: the machine-word building block of `Uint`, with carry-propagating
 //! constant-time primitive operations.
 //!
 //! Width selection is a compile-time property of the target: 64-bit limbs with
@@ -67,7 +67,7 @@ impl Limb {
     /// Subtraction with borrow: `self - rhs - (borrow >> (WORD_BITS-1))` → `(diff, borrow_out)`.
     ///
     /// Borrow values are in `{0, Word::MAX}`: a full mask, normalized on the way in
-    /// via its top bit. This asymmetry with [`Self::adc`] is deliberate — the
+    /// via its top bit. This asymmetry with [`Self::adc`] is deliberate: the
     /// borrow-out of a wrapping wide subtraction's high half is all-ones exactly when
     /// the subtraction underflowed, so the final borrow of a full chain *is* the `lt`
     /// mask (convertible with `Cond::from_msb`, no post-processing).

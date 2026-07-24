@@ -8,7 +8,7 @@
 //!   limbs at all times; every loop runs `0..LIMBS` unconditionally. Timing may depend
 //!   on capacity (a public, type-level property), never on the value held.
 //! - **Carry/borrow conventions.** `adc` chains a carry in `{0, 1}`; `sbb` chains a
-//!   borrow in `{0, Word::MAX}` — the borrow-out of a full subtraction chain is
+//!   borrow in `{0, Word::MAX}`: the borrow-out of a full subtraction chain is
 //!   directly a `Condition`-style all-ones/all-zeros mask (e.g. it *is* the `lt`
 //!   result, with no normalization step).
 //! - **Constant-time policy.** No branches on secret data; no memory indexing by
@@ -33,6 +33,7 @@
 
 // Submodules land one per work item: limb, uint, cmp, select, encoding.
 pub(crate) mod limb;
+pub(crate) mod uint;
 
 #[cfg(test)]
 mod tests;

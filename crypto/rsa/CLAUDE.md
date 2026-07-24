@@ -1,4 +1,4 @@
-# CLAUDE.md — `bouncycastle-rsa`
+# CLAUDE.md: `bouncycastle-rsa`
 
 Guidance for Claude Code when working in `crypto/rsa/`. This inherits everything in the
 repo-root `CLAUDE.md`, `QUALITY_AND_STYLE.md`, and `INTRODUCTION.md`; the notes here are
@@ -7,7 +7,7 @@ the RSA-specific additions. When the two conflict, the root rules win.
 ## Status
 
 **Not yet implemented.** This crate is being built from scratch as a stacked branch chain
-based on `release/0.1.2alpha` (the most up-to-date branch — 35 commits ahead of `main`).
+based on `release/0.1.2alpha` (the most up-to-date branch, 35 commits ahead of `main`).
 
 Implementation is driven by phase specs in `specs/` (currently
 `specs/phase-1-bigint-representation.md`, the approved phase-1 plan, with its
@@ -16,7 +16,7 @@ compile-verified prototype in `specs/phase-1-verified-prototype.md`). The spec's
 
 ```
 release/0.1.2alpha
- └─ luis/rsa/bigint     ① spec phases 1–3: bigint representation (limbs, Uint<LIMBS>, encoding,
+ └─ luis/rsa/bigint     ① spec phases 1-3: bigint representation (limbs, Uint<LIMBS>, encoding,
      │                    CT predicates), then arithmetic (add/sub/mul/shift), then Montgomery
      │                    (params, reduction, exponentiation)
      └─ luis/rsa/core   ② spec phase 4: RSA key types, keygen (prime gen + CRT params),
@@ -27,20 +27,20 @@ release/0.1.2alpha
 ```
 
 Each link builds on the previous and is meant to be reviewed on its own. Final merge targets
-`release/0.1.2alpha` (RSA's true parent), not `main` — the two have diverged (`main` has 15
+`release/0.1.2alpha` (RSA's true parent), not `main`: the two have diverged (`main` has 15
 commits not in `release`), so let the team's normal `release → main` merge carry RSA forward.
 
 ## Design decisions
 
-- **Bigint is a private module inside this crate** (decided — spec D1). The `bigint` tree lives
-  at `src/bigint/` as `mod bigint;` with everything `pub(crate)` — bc-rust does not expose a
+- **Bigint is a private module inside this crate** (decided, spec D1). The `bigint` tree lives
+  at `src/bigint/` as `mod bigint;` with everything `pub(crate)`, bc-rust does not expose a
   big-int API. Consequences: unit tests live in `src/bigint/tests/` (a `#[cfg(test)]` module
-  inside the crate — same private access as in-file blocks, but one test file per module so
+  inside the crate, same private access as in-file blocks, but one test file per module so
   implementation files stay lean), and benches reach internals via a non-default
   `bench-internals` feature gating a `#[doc(hidden)] pub mod internals` re-export. It still
   lands and is reviewed independently (branch ①) before any RSA logic depends on it.
-- **Still open — trait fit for encryption.** PSS / PKCS#1-sig map onto the existing
-  `core::Signature` trait. RSA-OAEP encryption fits none of `Hash/KDF/MAC/KEM/Signature` —
+- **Still open: trait fit for encryption.** PSS / PKCS#1-sig map onto the existing
+  `core::Signature` trait. RSA-OAEP encryption fits none of `Hash/KDF/MAC/KEM/Signature`:
   decide in link ③ whether to add a public-key-encryption trait to `core`, or model RSA-KEM
   onto the existing `KEM` trait.
 
@@ -50,7 +50,7 @@ commits not in `release`), so let the team's normal `release → main` merge car
   written from scratch in this workspace. (Dev/bench deps like `criterion` are fine.)
 - **`#![forbid(unsafe_code)]` and `#![forbid(missing_docs)]`** at every `lib.rs`. `#![no_std]`
   is *required* by QUALITY_AND_STYLE.md, but is currently blocked repo-wide by the `core`
-  crate's `Vec`-removal TODO — so: prefer const-sized `[Limb; N]` over heap `Vec`, and never add
+  crate's `Vec`-removal TODO, so: prefer const-sized `[Limb; N]` over heap `Vec`, and never add
   new `Vec` where a const-generic width works, so this crate is `no_std`-ready the moment `core`
   unblocks it.
 - **`SerializableState`.** Any algorithm with state exercised across multiple API calls (a
@@ -58,23 +58,23 @@ commits not in `release`), so let the team's normal `release → main` merge car
   to a cache and resume. Applies to any streaming RSA hash-input or multi-block flow we expose.
 - **Constant-time on all secret-dependent paths.** Private-key modexp, CRT recombination, and
   OAEP/PKCS#1 decryption padding checks must not branch or index on secret data. Use blinding on
-  the private operation. This is the single most important correctness/security property here —
+  the private operation. This is the single most important correctness/security property here:
   comment every place where constant-time behaviour is load-bearing.
 - **Push errors to compile time.** Prefer `&[u8; N]` + const-generic modulus width over
   runtime length checks. `Result` only for truly-uncontrollable failures (RNG failure, caller-
-  supplied malformed key). Run `./dev_scripts/quality_stats.sh` before/after — don't raise the
+  supplied malformed key). Run `./dev_scripts/quality_stats.sh` before/after, don't raise the
   unwrap / `Err()` counts.
-- **`unwrap()` needs justification** — a preceding check that proves success, or an inline
+- **`unwrap()` needs justification**: a preceding check that proves success, or an inline
   comment explaining infallibility.
 - **No `init()` / `reset()`; `do_final` takes `self` by value.** Constructors set up state,
   consumption methods consume. Provide a one-shot static API in addition to any streaming one.
 - **Sensitive types impl `core::Secret`** (and supertraits). Private exponent, primes `p`/`q`,
-  CRT params `dP`/`dQ`/`qInv`, and any intermediate holding them are secrets — never raw byte
+  CRT params `dP`/`dQ`/`qInv`, and any intermediate holding them are secrets, never raw byte
   arrays. They must zeroize on drop.
 
 ## Naming conventions (library-specific, from QUALITY_AND_STYLE.md)
 
-- **`pk` / `sk`** for public key / secret (private) key — not `pub`/`priv` (`pub` is a keyword).
+- **`pk` / `sk`** for public key / secret (private) key, not `pub`/`priv` (`pub` is a keyword).
 - **`LEN` = bytes, `SIZE` = bits.** e.g. a 2048-bit modulus → `MODULUS_SIZE = 2048`,
   `MODULUS_LEN = 256`. Use `SIZE` for security parameters, `LEN` for array sizing.
 - **`do_*()`** names any function that is part of a stateful streaming API.
@@ -91,17 +91,17 @@ justify any deliberate deviation. Bar: "would 6-months-from-now me need >10 min 
 
 Every primitive in this workspace must ship all of:
 
-- Tests driven through `core-test-framework` (trait conformance + error-condition coverage) —
+- Tests driven through `core-test-framework` (trait conformance + error-condition coverage):
   don't duplicate the canonical trait tests per-implementation. Live in `src/tests`. Every
   public-interface behaviour must be constrained by a test (treat future maintainers as
   malicious). Behaviour-critical *private* functions get in-file `#[cfg(test)] mod tests`.
-- **Known-answer vectors against both the bc-test-data repo and wycheproof** — in addition to
+- **Known-answer vectors against both the bc-test-data repo and wycheproof**, in addition to
   the RFC 8017 / FIPS vectors. Wycheproof's RSA/OAEP/PSS suites cover malformed-padding and
   edge cases that catch constant-time / validation bugs.
 - Criterion benches in `benches/` (`[[bench]]`, `harness = false`). Benchmark each variant with
   a distinct perf profile *separately* (e.g. CRT vs non-CRT private op, pre-expanded keys), but
   do **not** write separate benches for one-shot vs streaming of the same underlying impl.
-- A `mem_usage_benches/` harness — RSA's stack usage is non-trivial and must be characterized.
+- A `mem_usage_benches/` harness, RSA's stack usage is non-trivial and must be characterized.
 - A streaming stdin→stdout CLI subcommand in `cli/src/*_cmd.rs`, registered in `cli/src/main.rs`.
 - Registration in the matching `factory` enum once the trait fit is decided.
 - Crate docs with the required sections: **Usage Examples**, **Memory Usage** (stack table),

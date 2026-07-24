@@ -10,3 +10,4 @@
 //! ```
 
 mod limb;
+mod uint;
