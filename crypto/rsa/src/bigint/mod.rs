@@ -38,5 +38,8 @@ pub(crate) mod limb;
 pub(crate) mod select;
 pub(crate) mod uint;
 
+// Unit tests with private access, physically located in tests/bigint/ so the
+// quality-stats tooling classifies them as test code (see tests/bigint/mod.rs).
 #[cfg(test)]
+#[path = "../../tests/bigint/mod.rs"]
 mod tests;

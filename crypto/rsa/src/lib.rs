@@ -20,5 +20,7 @@ mod bigint;
 #[cfg(feature = "bench-internals")]
 #[doc(hidden)]
 pub mod internals {
-    // Re-exports are added as the bigint modules land (limb, uint, cmp, select, encoding).
+    pub use crate::bigint::encoding::DecodeError;
+    pub use crate::bigint::limb::{Cond, Limb, WORD_BITS, WORD_BYTES, WideWord, Word};
+    pub use crate::bigint::uint::{U1024, U1536, U2048, U3072, U4096, U6144, U8192, U16384, Uint};
 }
