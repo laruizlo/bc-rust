@@ -10,15 +10,26 @@ the RSA-specific additions. When the two conflict, the root rules win.
 skeleton, `Limb` layer (dual-width `adc`/`sbb`/`mac`), `Uint<LIMBS>` storage with `Secret`
 integration, CT predicates and conditional ops, RFC 8017 byte encoding, and committed KAT
 vectors with their generator (`dev_scripts/gen_bigint_vectors.py`). All tests pass in both
-limb-width lanes. Its prerequisite, the `utils/ct.rs` unsigned-mask extension, lives on
-`luis/utils/ct-unsigned-masks` (PR into `release/0.1.2alpha` pending review); the bigint
-branch is stacked on it and rebases onto `release/0.1.2alpha` once that PR merges.
+limb-width lanes.
 
-Pending before the phase-1 PR (needs a machine with a host C linker and python3; the
-authoring sandbox had neither):
+Its prerequisite, the `utils/ct.rs` unsigned-mask extension, lives on
+`luis/utils/ct-unsigned-masks` (PR into `release/0.1.2alpha`, in review). That branch is
+now 5 commits: the parity extension, signed/unsigned doc cross-references plus an unsigned
+`is_bit_set(value, bit)`, removal of `Condition<u64>::is_true` (the accessor is
+`to_bool_var` on all widths; the removal is isolated in its own commit in case reviewers
+object), mutation-run test additions, and a workspace-wide `cargo fmt` sweep. This bigint
+branch is stacked on the third of those commits and gets one final rebase onto
+`release/0.1.2alpha` when the PR merges. None of the later ct commits affect rsa code;
+optional nicety after rebase: `Uint::bit` may use the new `is_bit_set` instead of
+`from_lsb` plus shift.
+
+`cargo mutants` on `utils` is done and triaged (6 misses killed by new tests; 9 accepted
+`|`/`^` disjoint-mask equivalences; 1 documented survivor, `Secret::drop`, untestable
+without reading dropped memory). Still pending before the phase-1 PR (needs a machine
+with a host C linker and python3; the authoring sandbox had neither):
 
 - `cargo test --workspace`
-- `cargo mutants` on `utils` and `rsa`, with the triage note
+- `cargo mutants` on `rsa`, with the triage note
 - `python3 dev_scripts/gen_bigint_vectors.py` regeneration check (must be a no-op diff)
 - Disassembly spot-check of `adc`/`sbb`/`mac`/`select` per spec section 6.5
 
@@ -146,3 +157,7 @@ python3 dev_scripts/gen_bigint_vectors.py    # regenerate KAT vectors; diff must
 
 Every change must keep both limb-width lanes green; the `force_limb32` cfg is registered
 via `[lints.rust.unexpected_cfgs]` in `Cargo.toml`.
+
+Run `cargo fmt` on touched crates and verify `cargo fmt --all --check` passes before every
+commit: CI's `rust-style.yml` gates PRs on the whole workspace, so formatting drift
+anywhere fails PRs that never touched those files.
