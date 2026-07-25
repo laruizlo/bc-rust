@@ -6,8 +6,26 @@ the RSA-specific additions. When the two conflict, the root rules win.
 
 ## Status
 
-**Not yet implemented.** This crate is being built from scratch as a stacked branch chain
-based on `release/0.1.2alpha` (the most up-to-date branch, 35 commits ahead of `main`).
+**Phase 1 (bigint representation layer) is implemented** on `luis/rsa/bigint`: crate
+skeleton, `Limb` layer (dual-width `adc`/`sbb`/`mac`), `Uint<LIMBS>` storage with `Secret`
+integration, CT predicates and conditional ops, RFC 8017 byte encoding, and committed KAT
+vectors with their generator (`dev_scripts/gen_bigint_vectors.py`). All tests pass in both
+limb-width lanes. Its prerequisite, the `utils/ct.rs` unsigned-mask extension, lives on
+`luis/utils/ct-unsigned-masks` (PR into `release/0.1.2alpha` pending review); the bigint
+branch is stacked on it and rebases onto `release/0.1.2alpha` once that PR merges.
+
+Pending before the phase-1 PR (needs a machine with a host C linker and python3; the
+authoring sandbox had neither):
+
+- `cargo test --workspace`
+- `cargo mutants` on `utils` and `rsa`, with the triage note
+- `python3 dev_scripts/gen_bigint_vectors.py` regeneration check (must be a no-op diff)
+- Disassembly spot-check of `adc`/`sbb`/`mac`/`select` per spec section 6.5
+
+Next up: spec phase 2 (multi-limb add/sub/mul/shift) on this same branch.
+
+The crate is being built as a stacked branch chain based on `release/0.1.2alpha` (the most
+up-to-date branch, 35 commits ahead of `main`).
 
 Implementation is driven by phase specs in `specs/` (currently
 `specs/phase-1-bigint-representation.md`, the approved phase-1 plan, with its
@@ -33,12 +51,20 @@ commits not in `release`), so let the team's normal `release → main` merge car
 ## Design decisions
 
 - **Bigint is a private module inside this crate** (decided, spec D1). The `bigint` tree lives
-  at `src/bigint/` as `mod bigint;` with everything `pub(crate)`, bc-rust does not expose a
-  big-int API. Consequences: unit tests live in `src/bigint/tests/` (a `#[cfg(test)]` module
-  inside the crate, same private access as in-file blocks, but one test file per module so
-  implementation files stay lean), and benches reach internals via a non-default
-  `bench-internals` feature gating a `#[doc(hidden)] pub mod internals` re-export. It still
-  lands and is reviewed independently (branch ①) before any RSA logic depends on it.
+  at `src/bigint/` behind a private `mod bigint;`, bc-rust does not expose a big-int API.
+  Benches reach internals via the non-default `bench-internals` feature gating a
+  `#[doc(hidden)] pub mod internals` re-export. It still lands and is reviewed independently
+  (branch ①) before any RSA logic depends on it.
+- **Test layout** (decided): one test file per implementation module, physically under
+  `tests/bigint/`, mounted into the crate by `src/bigint/mod.rs` via `#[cfg(test)]
+  #[path = "../../tests/bigint/mod.rs"]`. They compile as crate-internal unit tests (private
+  access works; cargo does not auto-discover subdirectories of `tests/` as integration
+  tests), while `quality_stats.sh` counts them as test code rather than core code. Do not
+  move them into `src/`: that skews the CI-published fallibility metrics with test unwraps.
+- **KAT vectors are generated, committed, and deterministic.** `dev_scripts/gen_bigint_vectors.py`
+  (stdlib-only python3) writes `tests/bigint/vectors_data.rs` from SHA-256 of fixed tags with
+  Python unbounded ints as the oracle; regeneration must be byte-identical. Extend the
+  generator when new vector classes are needed; never hand-edit the generated file.
 - **Still open: trait fit for encryption.** PSS / PKCS#1-sig map onto the existing
   `core::Signature` trait. RSA-OAEP encryption fits none of `Hash/KDF/MAC/KEM/Signature`:
   decide in link ③ whether to add a public-key-encryption trait to `core`, or model RSA-KEM
@@ -111,10 +137,12 @@ Every primitive in this workspace must ship all of:
 
 ```
 cargo build -p bouncycastle-rsa
-cargo test  -p bouncycastle-rsa
-cargo bench -p bouncycastle-rsa
+cargo test  -p bouncycastle-rsa                                  # native limb width (u64 on 64-bit hosts)
+RUSTFLAGS="--cfg force_limb32" cargo test -p bouncycastle-rsa    # forced 32-bit limb lane; run BOTH
+cargo bench -p bouncycastle-rsa --features bench-internals      # benches need the internals feature
 cargo mutants        # surviving mutants must be investigated (config in .cargo/mutants.toml)
+python3 dev_scripts/gen_bigint_vectors.py    # regenerate KAT vectors; diff must be empty
 ```
 
-The workspace `members = ["crypto/*", ...]` glob auto-registers this crate once it has a
-`Cargo.toml` + `src/lib.rs`.
+Every change must keep both limb-width lanes green; the `force_limb32` cfg is registered
+via `[lints.rust.unexpected_cfgs]` in `Cargo.toml`.
