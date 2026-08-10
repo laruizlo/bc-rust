@@ -12,47 +12,55 @@ integration, CT predicates and conditional ops, RFC 8017 byte encoding, and comm
 vectors with their generator (`dev_scripts/gen_bigint_vectors.py`). All tests pass in both
 limb-width lanes.
 
-Its prerequisite, the `utils/ct.rs` unsigned-mask extension, lives on
-`luis/utils/ct-unsigned-masks` (PR into `release/0.1.2alpha`, in review). That branch is
-now 5 commits: the parity extension, signed/unsigned doc cross-references plus an unsigned
-`is_bit_set(value, bit)`, removal of `Condition<u64>::is_true` (the accessor is
-`to_bool` on all widths; the removal is isolated in its own commit in case reviewers
-object), mutation-run test additions, and a workspace-wide `cargo fmt` sweep. This bigint
-branch is stacked on the third of those commits and gets one final rebase onto
-`release/0.1.2alpha` when the PR merges. None of the later ct commits affect rsa code;
-optional nicety after rebase: `Uint::bit` may use the new `is_bit_set` instead of
+Its prerequisite, the `utils/ct.rs` unsigned-mask extension, was developed on
+`luis/utils/ct-unsigned-masks` (PR into `release/0.1.2alpha`, in review) and is now
+fully merged into this branch (merge commit `c3bceb0`, 2026-08-10): the parity
+extension, unsigned `is_bit_set(value, bit)`, the `to_bool` accessor on all widths
+(replacing `to_bool_var`, renamed across this crate in the merge commit), the
+demacroed per-width `Condition` impls, mutation-run test additions, and the
+workspace-wide `cargo fmt` sweep. No rebase onto the ct branch is needed anymore;
+once its PR lands in `release/0.1.2alpha` the shared commits deduplicate on merge.
+Optional nicety: `Uint::bit` may use the now-available `is_bit_set` instead of
 `from_lsb` plus shift.
 
 `cargo mutants` on `utils` is done and triaged (6 misses killed by new tests; 9 accepted
 `|`/`^` disjoint-mask equivalences; 1 documented survivor, `Secret::drop`, untestable
-without reading dropped memory). Still pending before the phase-1 PR (needs a machine
-with a host C linker and python3; the authoring sandbox had neither):
+without reading dropped memory). `cargo test --workspace` passed post-merge
+(2026-08-10, 78 suites, 447 tests; note plain `cargo test` at the repo root only
+runs the umbrella crate). Still pending before the phase-1 PR:
 
-- `cargo test --workspace`
 - `cargo mutants` on `rsa`, with the triage note
 - `python3 dev_scripts/gen_bigint_vectors.py` regeneration check (must be a no-op diff)
 - Disassembly spot-check of `adc`/`sbb`/`mac`/`select` per spec section 6.5
 
-Next up: spec phase 2 (multi-limb add/sub/mul/shift) on this same branch.
+Phase 2 (core arithmetic and the multiplication family) continues on
+`luis/rsa/bigint-arith`, stacked on `luis/rsa/bigint` so phase 1 can go up as its
+own PR; see that branch's copy of this file for its entry gate.
 
 The crate is being built as a stacked branch chain based on `release/0.1.2alpha` (the most
 up-to-date branch, 35 commits ahead of `main`).
 
-Implementation is driven by phase specs in `specs/` (currently
-`specs/phase-1-bigint-representation.md`, the approved phase-1 plan, with its
-compile-verified prototype in `specs/phase-1-verified-prototype.md`). The spec's
-**5 phases** map onto the **4-branch chain** like so:
+Implementation is driven by phase specs kept in a local `specs/` folder, one
+subdirectory per phase: `specs/phase_1/` holds the implemented phase-1 plan and its
+prototype, and `specs/phase_2/phase-2-arithmetic-and-multiplication.md` is the draft
+phase-2 plan, not yet reviewed. The folder is deliberately untracked (removed from
+repo history on 2026-08-10, ignored via `.git/info/exclude`), so it exists only in
+Luis's working copy. Each phase ships a compile-verified prototype alongside its spec
+(`phase-N-verified-prototype.md`); the prototypes are verification scratch, so where
+a prototype and its spec disagree, the spec governs. The spec's **5 phases** map onto
+the **5-branch chain** like so:
 
 ```
 release/0.1.2alpha
- └─ luis/rsa/bigint     ① spec phases 1-3: bigint representation (limbs, Uint<LIMBS>, encoding,
-     │                    CT predicates), then arithmetic (add/sub/mul/shift), then Montgomery
-     │                    (params, reduction, exponentiation)
-     └─ luis/rsa/core   ② spec phase 4: RSA key types, keygen (prime gen + CRT params),
-         │                RSAEP/RSADP/RSASP1/RSAVP1, CRT private op, blinding
-         └─ luis/rsa/schemes      ③ spec phase 5 (first half): OAEP (enc), PSS (sig), PKCS#1 v1.5
-             └─ luis/rsa/integration  ④ spec phase 5 (second half): core-trait impls, factory,
-                                        CLI, benches, mem_usage bench, docs
+ └─ luis/rsa/bigint            ① spec phase 1: bigint representation (limbs, Uint<LIMBS>,
+     │                           encoding, CT predicates)
+     └─ luis/rsa/bigint-arith  ② spec phases 2-3: arithmetic (add/sub/mul/shift), then
+         │                       Montgomery (params, reduction, exponentiation)
+         └─ luis/rsa/core      ③ spec phase 4: RSA key types, keygen (prime gen + CRT params),
+             │                   RSAEP/RSADP/RSASP1/RSAVP1, CRT private op, blinding
+             └─ luis/rsa/schemes      ④ spec phase 5 (first half): OAEP (enc), PSS (sig), PKCS#1 v1.5
+                 └─ luis/rsa/integration  ⑤ spec phase 5 (second half): core-trait impls, factory,
+                                            CLI, benches, mem_usage bench, docs
 ```
 
 Each link builds on the previous and is meant to be reviewed on its own. Final merge targets
