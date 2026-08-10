@@ -51,9 +51,9 @@ fn boundary_values() -> [U4; 13] {
 
 #[test]
 fn ct_is_zero() {
-    assert!(U4::ZERO.ct_is_zero().to_bool_var());
+    assert!(U4::ZERO.ct_is_zero().to_bool());
     for v in boundary_values().iter().skip(1) {
-        assert!(!v.ct_is_zero().to_bool_var());
+        assert!(!v.ct_is_zero().to_bool());
     }
 }
 
@@ -62,7 +62,7 @@ fn ct_eq_truth_table() {
     let vals = boundary_values();
     for (i, a) in vals.iter().enumerate() {
         for (j, b) in vals.iter().enumerate() {
-            assert_eq!(a.ct_eq(b).to_bool_var(), i == j);
+            assert_eq!(a.ct_eq(b).to_bool(), i == j);
         }
     }
 }
@@ -73,21 +73,21 @@ fn ct_lt_gt_gte_agree_with_reference() {
     for a in &vals {
         for b in &vals {
             let expected = ref_lt(a, b);
-            assert_eq!(a.ct_lt(b).to_bool_var(), expected);
-            assert_eq!(b.ct_gt(a).to_bool_var(), expected);
-            assert_eq!(a.ct_gte(b).to_bool_var(), !expected);
+            assert_eq!(a.ct_lt(b).to_bool(), expected);
+            assert_eq!(b.ct_gt(a).to_bool(), expected);
+            assert_eq!(a.ct_gte(b).to_bool(), !expected);
         }
     }
 }
 
 #[test]
 fn ct_is_odd() {
-    assert!(U4::ONE.ct_is_odd().to_bool_var());
-    assert!(U4::MAX.ct_is_odd().to_bool_var());
-    assert!(!U4::ZERO.ct_is_odd().to_bool_var());
+    assert!(U4::ONE.ct_is_odd().to_bool());
+    assert!(U4::MAX.ct_is_odd().to_bool());
+    assert!(!U4::ZERO.ct_is_odd().to_bool());
     // oddness is decided by limb 0 alone
-    assert!(!make([0, 1, 1, 1]).ct_is_odd().to_bool_var());
-    assert!(make([1, 0, 0, 0]).ct_is_odd().to_bool_var());
+    assert!(!make([0, 1, 1, 1]).ct_is_odd().to_bool());
+    assert!(make([1, 0, 0, 0]).ct_is_odd().to_bool());
 }
 
 #[test]
@@ -99,13 +99,13 @@ fn bit_access() {
     }
     for i in 0..U4::BITS {
         let expected = (i / WORD_BITS) == (i % WORD_BITS);
-        assert_eq!(x.bit(i).to_bool_var(), expected);
+        assert_eq!(x.bit(i).to_bool(), expected);
         assert_eq!(x.bit_vartime(i), expected);
     }
     // MAX has every bit set; ZERO none
     for i in 0..U4::BITS {
-        assert!(U4::MAX.bit(i).to_bool_var());
-        assert!(!U4::ZERO.bit(i).to_bool_var());
+        assert!(U4::MAX.bit(i).to_bool());
+        assert!(!U4::ZERO.bit(i).to_bool());
         assert!(U4::MAX.bit_vartime(i));
         assert!(!U4::ZERO.bit_vartime(i));
     }

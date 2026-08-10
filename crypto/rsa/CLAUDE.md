@@ -16,7 +16,7 @@ Its prerequisite, the `utils/ct.rs` unsigned-mask extension, lives on
 `luis/utils/ct-unsigned-masks` (PR into `release/0.1.2alpha`, in review). That branch is
 now 5 commits: the parity extension, signed/unsigned doc cross-references plus an unsigned
 `is_bit_set(value, bit)`, removal of `Condition<u64>::is_true` (the accessor is
-`to_bool_var` on all widths; the removal is isolated in its own commit in case reviewers
+`to_bool` on all widths; the removal is isolated in its own commit in case reviewers
 object), mutation-run test additions, and a workspace-wide `cargo fmt` sweep. This bigint
 branch is stacked on the third of those commits and gets one final rebase onto
 `release/0.1.2alpha` when the PR merges. None of the later ct commits affect rsa code;

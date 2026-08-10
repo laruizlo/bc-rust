@@ -70,7 +70,7 @@ impl<const LIMBS: usize> ZeroizablePrimitive for Uint<LIMBS> {
 /// the `bool` convenience over it for public decision points and tests.
 impl<const LIMBS: usize> PartialEq for Uint<LIMBS> {
     fn eq(&self, other: &Self) -> bool {
-        self.ct_eq(other).to_bool_var()
+        self.ct_eq(other).to_bool()
     }
 }
 impl<const LIMBS: usize> Eq for Uint<LIMBS> {}

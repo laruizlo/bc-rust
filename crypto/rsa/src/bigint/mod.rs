@@ -15,7 +15,7 @@
 //!   secret values; loop bounds from type-level constants or public lengths only; no
 //!   `/` or `%` outside `const` contexts on public type-level numbers; shifts only by
 //!   public amounts; secret-dependent decisions travel as masks (`Condition<Word>`),
-//!   never `bool`, with `to_bool_var` reserved for genuine public decision points.
+//!   never `bool`, with `to_bool` reserved for genuine public decision points.
 //! - **Vartime naming rule.** Any function whose timing may depend on *values* (not
 //!   just type-level sizes or public lengths) carries a `_vartime` suffix and a
 //!   rustdoc justification of why its inputs are public.

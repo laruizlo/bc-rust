@@ -2,7 +2,7 @@
 //!
 //! Every function here is fixed-iteration over `LIMBS`, mask-based, and free of
 //! secret-dependent branches or indices. Each returns `Cond` (`Condition<Word>`),
-//! never `bool`; callers convert with `to_bool_var` only at public decision points.
+//! never `bool`; callers convert with `to_bool` only at public decision points.
 
 use super::limb::{Cond, Limb, WORD_BITS, Word};
 use super::uint::Uint;

@@ -70,7 +70,7 @@ fn sbb_borrow_is_lt_mask() {
     for a in BOUNDARY {
         for b in BOUNDARY {
             let (_, borrow) = Limb(a).sbb(Limb(b), Limb::ZERO);
-            assert_eq!(Cond::from_msb(borrow.0).to_bool_var(), a < b);
+            assert_eq!(Cond::from_msb(borrow.0).to_bool(), a < b);
         }
     }
 }
@@ -99,17 +99,17 @@ fn mac_identities() {
 
 #[test]
 fn ct_predicates() {
-    assert!(Limb::ZERO.ct_is_zero().to_bool_var());
-    assert!(!Limb::ONE.ct_is_zero().to_bool_var());
-    assert!(!Limb::MAX.ct_is_zero().to_bool_var());
+    assert!(Limb::ZERO.ct_is_zero().to_bool());
+    assert!(!Limb::ONE.ct_is_zero().to_bool());
+    assert!(!Limb::MAX.ct_is_zero().to_bool());
 
-    assert!(Limb::MAX.ct_eq(Limb::MAX).to_bool_var());
-    assert!(!Limb::MAX.ct_eq(Limb(Word::MAX - 1)).to_bool_var());
+    assert!(Limb::MAX.ct_eq(Limb::MAX).to_bool());
+    assert!(!Limb::MAX.ct_eq(Limb(Word::MAX - 1)).to_bool());
 
-    assert!(Limb::ONE.ct_is_odd().to_bool_var());
-    assert!(Limb::MAX.ct_is_odd().to_bool_var());
-    assert!(!Limb::ZERO.ct_is_odd().to_bool_var());
-    assert!(!Limb(Word::MAX - 1).ct_is_odd().to_bool_var());
+    assert!(Limb::ONE.ct_is_odd().to_bool());
+    assert!(Limb::MAX.ct_is_odd().to_bool());
+    assert!(!Limb::ZERO.ct_is_odd().to_bool());
+    assert!(!Limb(Word::MAX - 1).ct_is_odd().to_bool());
 }
 
 #[test]
