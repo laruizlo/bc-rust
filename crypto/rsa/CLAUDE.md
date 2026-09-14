@@ -12,38 +12,38 @@ integration, CT predicates and conditional ops, RFC 8017 byte encoding, and comm
 vectors with their generator (`dev_scripts/gen_bigint_vectors.py`). All tests pass in both
 limb-width lanes.
 
-Its prerequisite, the `utils/ct.rs` unsigned-mask extension, was developed on
-`luis/utils/ct-unsigned-masks` (PR into `release/0.1.2alpha`, in review) and is now
-fully merged into this branch (merge commit `c3bceb0`, 2026-08-10): the parity
-extension, unsigned `is_bit_set(value, bit)`, the `to_bool` accessor on all widths
-(replacing `to_bool_var`, renamed across this crate in the merge commit), the
-demacroed per-width `Condition` impls, mutation-run test additions, and the
-workspace-wide `cargo fmt` sweep. No rebase onto the ct branch is needed anymore;
-once its PR lands in `release/0.1.2alpha` the shared commits deduplicate on merge.
-Optional nicety: `Uint::bit` may use the now-available `is_bit_set` instead of
-`from_lsb` plus shift.
+Its prerequisite, the `utils/ct.rs` unsigned-mask extension, has landed: the
+`luis/utils/ct-unsigned-masks` branch was squash-merged into `release/0.1.3alpha`
+as PR #63 (`519e4a4`), including a late constructor rename this branch's earlier
+ct merge (`c3bceb0`) predated (final naming: `from_bool_const::<VALUE>()` for the
+const-generic form, `from_bool(value)` for the runtime form; the accessor is
+`to_bool`). This branch adopted the landed copy verbatim in the
+`release/0.1.3alpha` merge (`76b701f`, 2026-09-14): `ct.rs` and `ct_tests.rs`
+here are now byte-identical to the release, and the ct branch itself is done
+(kept only for the PR record). Optional nicety: `Uint::bit` may use
+`is_bit_set` instead of `from_lsb` plus shift.
 
 `cargo mutants` on `utils` is done and triaged (6 misses killed by new tests; 9 accepted
 `|`/`^` disjoint-mask equivalences; 1 documented survivor, `Secret::drop`, untestable
-without reading dropped memory). `cargo test --workspace` passed post-merge
-(2026-08-10, 78 suites, 447 tests; note plain `cargo test` at the repo root only
-runs the umbrella crate). Still pending before the phase-1 PR:
-
-- `cargo mutants` on `rsa`, with the triage note
-- `python3 dev_scripts/gen_bigint_vectors.py` regeneration check (must be a no-op diff)
-- Disassembly spot-check of `adc`/`sbb`/`mac`/`select` per spec section 6.5
+without reading dropped memory). `cargo test --workspace` passed after the
+`release/0.1.3alpha` merge (2026-09-14, 75 suites, 530 tests, 0 failures; note
+plain `cargo test` at the repo root only runs the umbrella crate). The phase-1
+gate items (rsa `cargo mutants` with triage, vector-regeneration no-op check,
+disassembly spot-check) were run and closed on the phase-2 tree, 2026-08-13; see
+the `luis/rsa/bigint-arith` copy of this file for the results.
 
 Phase 2 (core arithmetic and the multiplication family) continues on
 `luis/rsa/bigint-arith`, stacked on `luis/rsa/bigint` so phase 1 can go up as its
 own PR; see that branch's copy of this file for its entry gate.
 
-The crate is being built as a stacked branch chain based on `release/0.1.2alpha` (the most
-up-to-date branch, 35 commits ahead of `main`).
+The crate is being built as a stacked branch chain based on `release/0.1.3alpha`
+(the most up-to-date branch; this branch merged it at `76b701f`, adopting the
+landed ct copy and the release's centralized workspace crate versions).
 
 Implementation is driven by phase specs kept in a local `specs/` folder, one
 subdirectory per phase: `specs/phase_1/` holds the implemented phase-1 plan and its
-prototype, and `specs/phase_2/phase-2-arithmetic-and-multiplication.md` is the draft
-phase-2 plan, not yet reviewed. The folder is deliberately untracked (removed from
+prototype, and `specs/phase_2/` holds the phase-2 plan, reviewed and approved on
+2026-08-13 and implemented on `luis/rsa/bigint-arith`. The folder is deliberately untracked (removed from
 repo history on 2026-08-10, ignored via `.git/info/exclude`), so it exists only in
 Luis's working copy. Each phase ships a compile-verified prototype alongside its spec
 (`phase-N-verified-prototype.md`); the prototypes are verification scratch, so where
@@ -51,7 +51,7 @@ a prototype and its spec disagree, the spec governs. The spec's **5 phases** map
 the **5-branch chain** like so:
 
 ```
-release/0.1.2alpha
+release/0.1.3alpha
  └─ luis/rsa/bigint            ① spec phase 1: bigint representation (limbs, Uint<LIMBS>,
      │                           encoding, CT predicates)
      └─ luis/rsa/bigint-arith  ② spec phases 2-3: arithmetic (add/sub/mul/shift), then
@@ -64,8 +64,8 @@ release/0.1.2alpha
 ```
 
 Each link builds on the previous and is meant to be reviewed on its own. Final merge targets
-`release/0.1.2alpha` (RSA's true parent), not `main`: the two have diverged (`main` has 15
-commits not in `release`), so let the team's normal `release → main` merge carry RSA forward.
+`release/0.1.3alpha` (RSA's true parent), not `main` (`main` is currently strictly behind the
+release branch), so let the team's normal `release → main` merge carry RSA forward.
 
 ## Design decisions
 
