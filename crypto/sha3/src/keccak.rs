@@ -250,12 +250,14 @@ impl KeccakInternal {
         }
     }
 
+    /// Absorbs the final `bits` (0..=7, in the least significant bits of `data`) of the message and
+    /// switches the sponge to the squeezing phase. `bits == 0` means "no further bits": the sponge is
+    /// padded and switched to squeezing without absorbing anything. Callers that have already applied a
+    /// domain-separation suffix rely on this — if the switch did not happen here, a later squeeze would
+    /// see `squeezing == false` and apply the suffix a second time.
     pub(super) fn absorb_bits(&mut self, data: u8, bits: usize) -> Result<(), HashError> {
-        if bits == 0 {
-            return Ok(());
-        }
-        if !(1..=7).contains(&bits) {
-            return Err(HashError::InvalidLength("bits must be in the range 1 to 7"));
+        if bits > 7 {
+            return Err(HashError::InvalidLength("bits must be in the range 0 to 7"));
         }
         if (self.bits_in_queue & 7) != 0 {
             return Err(HashError::InvalidState("attempt to absorb with odd length queue"));
@@ -264,11 +266,13 @@ impl KeccakInternal {
             return Err(HashError::InvalidState("attempt to absorb while squeezing"));
         }
 
-        let mask = (1 << bits) - 1;
-        self.data_queue[self.bits_in_queue >> 3] = data & mask;
+        if bits != 0 {
+            let mask = (1 << bits) - 1;
+            self.data_queue[self.bits_in_queue >> 3] = data & mask;
 
-        // NOTE: After this, bits_in_queue is no longer a multiple of 8, so no more absorbs will work
-        self.bits_in_queue += bits;
+            // NOTE: After this, bits_in_queue is no longer a multiple of 8, so no more absorbs will work
+            self.bits_in_queue += bits;
+        }
         self.pad_and_switch_to_squeezing_phase();
         Ok(())
     }
@@ -500,18 +504,118 @@ mod keccak_tests {
     use super::*;
     use bouncycastle_hex as hex;
 
+    /// Basic sponge sanity: absorbing in one chunk or many gives the same output, successive
+    /// squeezes continue the stream (do not repeat), and different capacities give different output.
     #[test]
     fn test_keccak() {
-        let mut d = KeccakInternal::new(KeccakSize::_256);
         let m_vec = hex::decode("6d657373616765").unwrap();
+
+        let mut d = KeccakInternal::new(KeccakSize::_256);
         d.absorb(&m_vec);
+        let mut out1 = [0u8; 32];
+        d.squeeze(&mut out1);
+        let mut out2 = [0u8; 32];
+        d.squeeze(&mut out2);
+        assert_ne!(out1, [0u8; 32]);
+        assert_ne!(out1, out2, "successive squeezes must continue the output stream");
 
-        let mut out = [0u8; 32];
-        d.squeeze(&mut out);
-        println!("n1: {:x?}", &out);
+        // chunked absorb + single 64-byte squeeze must reproduce out1 || out2
+        let mut d = KeccakInternal::new(KeccakSize::_256);
+        for b in &m_vec {
+            d.absorb(core::slice::from_ref(b));
+        }
+        let mut out64 = [0u8; 64];
+        d.squeeze(&mut out64);
+        assert_eq!(&out64[..32], &out1);
+        assert_eq!(&out64[32..], &out2);
 
-        d.squeeze(&mut out);
-        println!("n2: {:x?}", &out);
+        let mut d = KeccakInternal::new(KeccakSize::_512);
+        d.absorb(&m_vec);
+        let mut out_c512 = [0u8; 32];
+        d.squeeze(&mut out_c512);
+        assert_ne!(out_c512, out1);
+    }
+
+    /// absorb_bits(): 0..=7 bits are accepted and always switch the sponge to squeezing (0 bits
+    /// included — see the doc comment); 8+ bits are rejected; a second call is rejected as squeezing.
+    #[test]
+    fn absorb_bits_range_and_phase() {
+        for bits in 0..=7usize {
+            let mut d = KeccakInternal::new(KeccakSize::_256);
+            d.absorb(b"abc");
+            d.absorb_bits(0xFF, bits).unwrap();
+            assert!(d.squeezing, "bits={bits}: must switch to squeezing");
+            assert!(matches!(d.absorb_bits(0, 1), Err(HashError::InvalidState(_))));
+        }
+        for bits in [8usize, 9, 16, usize::MAX] {
+            let mut d = KeccakInternal::new(KeccakSize::_256);
+            assert!(
+                matches!(d.absorb_bits(0, bits), Err(HashError::InvalidLength(_))),
+                "bits={bits}"
+            );
+            assert!(!d.squeezing, "rejected call must not change phase");
+        }
+    }
+
+    /// Pins the constants for the lengths of the SHA3 [`Suspendable`] state arrays.
+    #[test]
+    fn pin_serialized_state_constants() {
+        assert_eq!(
+            KECCAK_SERIALIZED_LEN, 401,
+            "200 (state) + 192 (queue) + 8 (bits) + 1 (squeezing)"
+        );
+        assert_eq!(SHA3_FAMILY_STATE_LEN, 412, "1 (tag) + 401 (keccak) + 1 + 1 + 8 (kdf metadata)");
+        assert_eq!(SUSPENDED_SHA3_STATE_LEN, 415, "3 (lib version) + 412");
+    }
+
+    /// The three KDF metadata fields sit in adjacent slots after the keccak state, and the public
+    /// `Suspendable` impls can only ever serialize them at their defaults (the KDF entry points are
+    /// one-shot and consume `self`), so the integration-level round-trip tests cannot tell the slots
+    /// apart.
+    /// Test: Round-trip distinct, non-zero values for every field here so that a mixed-up offset
+    /// in either direction is caught.
+    #[test]
+    fn sha3_family_state_round_trips_kdf_metadata() {
+        let rate = 1600 - ((KeccakSize::_256 as usize) << 1);
+        let mut d = KeccakInternal::new(KeccakSize::_256);
+        d.absorb(b"message");
+
+        // Every field gets a value that is distinct from every other field's value, and non-zero.
+        let (tag, key_type, strength, entropy) =
+            (0x42u8, KeyType::Unknown, SecurityStrength::_192bit, 0x0102_0304_0506_0708usize);
+        // Check that these two in fact serialize to different byte values.
+        assert_ne!(key_type as u8, strength as u8);
+
+        let mut out = [0u8; SHA3_FAMILY_STATE_LEN];
+        serialize_sha3_family_state(&mut out, tag, &d, key_type, strength, entropy);
+
+        // Layout per the doc comment on SHA3_FAMILY_STATE_LEN.
+        assert_eq!(out[0], tag);
+        assert_eq!(out[1 + KECCAK_SERIALIZED_LEN], key_type as u8);
+        assert_eq!(out[1 + KECCAK_SERIALIZED_LEN + 1], strength as u8);
+        assert_eq!(
+            &out[1 + KECCAK_SERIALIZED_LEN + 2..],
+            &(entropy as u64).to_le_bytes(),
+            "kdf_entropy occupies the final 8 bytes"
+        );
+
+        let (d2, kt2, ss2, e2) = deserialize_sha3_family_state(&out, tag, rate).unwrap();
+        assert_eq!(kt2, key_type);
+        assert_eq!(ss2, strength);
+        assert_eq!(e2, entropy);
+
+        // The keccak state itself must also have survived: both sponges give the same output.
+        let (mut o1, mut o2) = ([0u8; 32], [0u8; 32]);
+        d.squeeze(&mut o1);
+        let mut d2 = d2;
+        d2.squeeze(&mut o2);
+        assert_eq!(o1, o2);
+
+        // A wrong tag is rejected before anything else is inspected.
+        assert!(matches!(
+            deserialize_sha3_family_state(&out, tag ^ 1, rate),
+            Err(SuspendableError::InvalidData)
+        ));
     }
 
     /// Regression test for from_serialized_state's validation of a not-yet-squeezing queue: a corrupt

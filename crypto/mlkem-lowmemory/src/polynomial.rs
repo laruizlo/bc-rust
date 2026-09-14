@@ -4,12 +4,10 @@ use crate::aux_functions::{
     ZETAS, ZETAS_INV, barrett_reduce, montgomery_reduce, mul_mont, ntt_base_mult,
 };
 use crate::mlkem::{N, q};
+use crate::params::MLKEMParams;
 use core::ops::{Index, IndexMut};
 
 /// A polynomial over the ML-KEM ring.
-/// Dev note: this doesn't strictly need to be pub ... ie there's no good reason for a caller to use this class directly,
-/// but in order to test the Debug and Display traits, you need STD, so those can't be tested from inline tests in this file
-/// and the real unit tests are in a different crate, so here we are.
 ///
 /// # 🚨 Security 🚨
 /// Polynomials themselves are not inherently secret since sometimes they are part of public keys
@@ -17,7 +15,7 @@ use core::ops::{Index, IndexMut};
 /// It is the responsibility of the caller to wrap sensitive instances in `Secret<Polynomial>`.
 /// Note: at the moment, nothing in this crate uses `Secret<Polynomial>`, so I have left the `impl ZeroizablePrimitive` commented-out.
 #[derive(Clone, Copy)]
-pub struct Polynomial {
+pub(crate) struct Polynomial {
     pub(crate) coeffs: [i16; N],
 }
 
@@ -171,13 +169,13 @@ impl Polynomial {
     /// This is an optimized version of
     ///   ByteEncode_𝑑𝑣( Compress_𝑑𝑣(𝑣) )
     /// which packs a single polynomial according to the packing coefficient dv
-    pub(crate) fn compress_poly<const dv: i16>(&self, out: &mut [u8]) {
-        // make sure to received a dv
-        debug_assert!(dv == 4 || dv == 5);
+    pub(crate) fn compress_poly<P: MLKEMParams>(&self, out: &mut [u8]) {
+        // make sure to received a P::dv
+        debug_assert!(P::dv == 4 || P::dv == 5);
 
         // make sure the right size output buffer is given
-        // each of the N i16's will take dv bits
-        debug_assert_eq!(out.len(), N * (dv as usize) / 8);
+        // each of the N i16's will take P::dv bits
+        debug_assert_eq!(out.len(), N * (P::dv as usize) / 8);
 
         let mut t = [0u8; 8];
         let mut idx = 0;
@@ -189,7 +187,7 @@ impl Polynomial {
         // let mut s = self.clone();
         // s.cond_sub_q();
 
-        match dv {
+        match P::dv {
             4 => {
                 // MLKEM512 and MLKEM768
                 for i in 0..N / 8 {
@@ -230,20 +228,20 @@ impl Polynomial {
     /// This is an optimized version of
     ///   Decompress_𝑑𝑣( ByteDecode_𝑑𝑣(𝑐2) )
     /// which unpacks a single polynomial according to the packing coefficient dv
-    pub(crate) fn decompress_poly<const dv: i16>(compressed_v: &[u8]) -> Polynomial {
-        // make sure we have received a dv
-        debug_assert!(dv == 4 || dv == 5);
+    pub(crate) fn decompress_poly<P: MLKEMParams>(compressed_v: &[u8]) -> Polynomial {
+        // make sure we have received a P::dv
+        debug_assert!(P::dv == 4 || P::dv == 5);
 
         // make sure we were given the right size output buffer
-        // each of the N i16's will take dv bits
-        debug_assert_eq!(compressed_v.len(), N * (dv as usize) / 8);
+        // each of the N i16's will take P::dv bits
+        debug_assert_eq!(compressed_v.len(), N * (P::dv as usize) / 8);
 
         let mut v = Polynomial::new();
 
         let mut idx = 0usize;
 
         // if self.m_engine.poly_compressed_bytes() == 128 {
-        match dv {
+        match P::dv {
             4 => {
                 // MLKEM512 and MLKEM768
                 for i in 0..N / 2 {

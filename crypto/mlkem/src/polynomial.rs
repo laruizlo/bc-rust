@@ -6,23 +6,20 @@ use crate::aux_functions::{
     ZETAS, ZETAS_INV, barrett_reduce, montgomery_reduce, mul_mont, ntt_base_mult,
 };
 use crate::mlkem::{N, q};
+use crate::params::MLKEMParams;
 
 /// A polynomial over the ML-KEM ring.
-///
-/// Dev note: The following structure does not necessarily need to be declared as public.
-/// There is no real scenario where this function needs to be called directly.
-/// However, in order to test the Debug and Display traits, it is necessary to use STD, so those
-/// can't be tested from inline tests in this file and the real unit tests are in a different crate.
-/// That's the reason why pub is used.
 ///
 /// # 🚨 Security 🚨
 /// Polynomials themselves are not inherently secret since sometimes they are part of public keys
 /// and sometimes private keys.
 /// It is the responsibility of the caller to wrap sensitive instances in `Secret<Vector>`.
 #[derive(Clone, Copy)]
+///
+/// Public only because it appears in [`crate::VectorTrait`]'s signatures; its fields and
+/// operations are crate-private, so from outside it is an opaque handle.
 pub struct Polynomial {
-    /// Note: this is exposed publicly only for testing purposes and there is no good reason to use it in production code.
-    pub coeffs: [i16; N],
+    pub(crate) coeffs: [i16; N],
 }
 
 /// Convenience function to avoid ".0" all over the place.
@@ -143,13 +140,13 @@ impl Polynomial {
     /// This is an optimized version of
     ///   ByteEncode_𝑑𝑣( Compress_𝑑𝑣(𝑣) )
     /// which packs a single polynomial according to the packing coefficient dv
-    pub(crate) fn compress_poly<const dv: i16>(&self, out: &mut [u8]) {
-        // make sure we have received a dv
-        debug_assert!(dv == 4 || dv == 5);
+    pub(crate) fn compress_poly<P: MLKEMParams>(&self, out: &mut [u8]) {
+        // make sure we have received a P::dv
+        debug_assert!(P::dv == 4 || P::dv == 5);
 
         // make sure the right size output buffer is given
-        // each of the N i16's will take dv bits
-        debug_assert_eq!(out.len(), N * (dv as usize) / 8);
+        // each of the N i16's will take P::dv bits
+        debug_assert_eq!(out.len(), N * (P::dv as usize) / 8);
 
         let mut t = [0u8; 8];
         let mut idx = 0;
@@ -161,7 +158,7 @@ impl Polynomial {
         // let mut s = self.clone();
         // s.cond_sub_q();
 
-        match dv {
+        match P::dv {
             4 => {
                 // MLKEM512 and MLKEM768
                 for i in 0..N / 8 {
@@ -202,22 +199,18 @@ impl Polynomial {
     /// This is an optimized version of
     /// Decompress_𝑑𝑣( ByteDecode_𝑑𝑣(𝑐2) )
     /// which unpacks a single polynomial according to the packing coefficient dv
-    pub(crate) fn decompress_poly<const dv: i16>(compressed_v: &[u8]) -> Polynomial {
-        // make sure to received a dv
-        debug_assert!(dv == 4 || dv == 5);
-
+    pub(crate) fn decompress_poly<P: MLKEMParams>(compressed_v: &[u8]) -> Polynomial {
         // make sure the right size output buffer is given
-        // each of the N i16's will take dv bits
-        debug_assert_eq!(compressed_v.len(), N * (dv as usize) / 8);
+        // each of the N i16's will take P::dv bits
+        debug_assert_eq!(compressed_v.len(), N * (P::dv as usize) / 8);
 
         let mut v = Polynomial::new();
 
         let mut idx = 0usize;
 
-        // if self.m_engine.poly_compressed_bytes() == 128 {
-        match dv {
+        match P::dv {
+            // MLKEM512 and MLKEM768
             4 => {
-                // MLKEM512 and MLKEM768
                 for i in 0..N / 2 {
                     v[2 * i] =
                         (((((compressed_v[idx] & 15) as i16) as i32 * (q as i32)) + 8) >> 4) as i16;
@@ -226,8 +219,8 @@ impl Polynomial {
                     idx += 1;
                 }
             }
+            // MLKEM1024
             5 => {
-                // MLKEM1024
                 let mut t = [0u8; 8];
                 for i in 0..N / 8 {
                     t[0] = compressed_v[idx];
@@ -263,8 +256,7 @@ impl Polynomial {
     /// Computes the NTT representation 𝑓_hat of the given polynomial 𝑓 ∈ 𝑅𝑞.
     /// Input: array 𝑓 ∈ ℤ256  ▷ the coefficients of the input polynomial
     /// Output: array 𝑓_hat ∈ ℤ256  ▷ the coefficients of the NTT of the input polynomial
-    /// Note: this is exposed publicly only for testing purposes and there is no good reason to use it in production code.
-    pub fn ntt(&mut self) {
+    pub(crate) fn ntt(&mut self) {
         let mut len = 128;
         let mut k = 1;
 
@@ -290,8 +282,7 @@ impl Polynomial {
     /// Computes the polynomial 𝑓 ∈ 𝑅𝑞 that corresponds to the given NTT representation 𝑓 ∈ 𝑇𝑞.
     /// Input: array 𝑓 ∈ ℤ_{256}  ▷ the coefficients of input NTT representation
     /// Output: array 𝑓 ∈ ℤ_{256}  ▷ the coefficients of the inverse NTT of the input
-    /// Note: this is exposed publicly only for testing purposes and there is no good reason to use it in production code.
-    pub fn inv_ntt(&mut self) {
+    pub(crate) fn inv_ntt(&mut self) {
         // FIPS 203 Alg 10 wants you to copy f_hat into f, and then act on f
         // but here it is performed in-place in order to optimize memory usage.
 
@@ -329,8 +320,7 @@ impl Polynomial {
 ///
 /// Borrowed from:
 /// <https://github.com/pq-crystals/kyber/blob/main/ref/poly.c#L290>
-/// Note: this is exposed publicly only for testing purposes and there is no good reason to use it in production code.
-pub fn base_mult_montgomery(a: &Polynomial, b: &Polynomial) -> Polynomial {
+pub(crate) fn base_mult_montgomery(a: &Polynomial, b: &Polynomial) -> Polynomial {
     let mut r = Polynomial::new();
 
     for i in 0..(N / 4) {

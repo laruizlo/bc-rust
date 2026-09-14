@@ -153,11 +153,12 @@
 #[allow(unused_imports)]
 use bouncycastle_core::key_material::KeyMaterialTrait;
 
-pub mod aux_functions;
+mod aux_functions;
 mod matrix;
 pub mod mlkem;
 mod mlkem_keys;
-pub mod polynomial;
+mod params;
+mod polynomial;
 
 /*** Exported types ***/
 pub use mlkem::{MLKEM, MLKEM512, MLKEM768, MLKEM1024, MLKEMTrait};
@@ -181,12 +182,6 @@ pub use mlkem::ML_KEM_768_NAME;
 pub use mlkem::ML_KEM_1024_NAME;
 
 pub use mlkem::{MLKEM_RND_LEN, MLKEM_SEED_LEN, MLKEM_SS_LEN};
-
 pub use mlkem::{MLKEM512_CT_LEN, MLKEM512_PK_LEN, MLKEM512_SK_LEN};
 pub use mlkem::{MLKEM768_CT_LEN, MLKEM768_PK_LEN, MLKEM768_SK_LEN};
 pub use mlkem::{MLKEM1024_CT_LEN, MLKEM1024_PK_LEN, MLKEM1024_SK_LEN};
-
-pub use matrix::Matrix;
-
-// re-export just so it's visible to unit tests
-pub use polynomial::Polynomial;

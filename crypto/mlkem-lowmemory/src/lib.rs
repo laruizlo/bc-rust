@@ -244,6 +244,7 @@ mod aux_functions;
 mod low_memory_helpers;
 pub mod mlkem;
 mod mlkem_keys;
+mod params;
 mod polynomial;
 
 /*** Exported types ***/
@@ -265,5 +266,4 @@ pub use mlkem::{MLKEM512_CT_LEN, MLKEM512_PK_LEN, MLKEM512_SK_LEN};
 pub use mlkem::{MLKEM768_CT_LEN, MLKEM768_PK_LEN, MLKEM768_SK_LEN};
 pub use mlkem::{MLKEM1024_CT_LEN, MLKEM1024_PK_LEN, MLKEM1024_SK_LEN};
 
-// re-export just so it is visible to unit tests
-pub use polynomial::Polynomial;
+/*** Parameter sets ***/
