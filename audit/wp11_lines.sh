@@ -182,6 +182,47 @@ claims|$R/lib.rs|323|347|-|checked before it is released|the three bullets the r
 claims|$R/modexp.rs|14|26|-|mod_pow_public_exponent|module docs: which function for which exponent and modulus
 claims|$R/rsa_core.rs|129|149|-|stack it used is overwritten afterwards|the checked CRT's docs
 claims|$R/rsa_core.rs|215|219|-|RFC 8017 §5.2.1 step 2.b|crt_exp's docs
+# WP14.4, rows F-02 to F-06: the lines the proof of I1 (claude/rsa-proof-book.md) and the report's
+# part 2 (claude/rsa-wp14-report-2.md) cite beyond those above
+I1|$R/lib.rs|414|414|-|forbid(unsafe_code)|H1: no unsafe in the crate
+I1|$R/keys.rs|45|48|-|pub struct RsaPublicComponents|step 1: the public components, private fields
+I1|$R/keys.rs|153|163|-|pub struct RsaPrivateComponents|step 1: the private components, private fields
+I1|$R/keys.rs|444|447|-|pub struct RsaPublicKey|step 1: the signature public key
+I1|$R/keys.rs|546|549|-|pub struct RsaPrivateKey|step 1: the signature private key
+I1|$R/rsasve.rs|129|129|-|pub(crate) RsaPublicComponents<K>|step 1: the KEM public key's one field
+I1|$R/rsasve.rs|172|172|-|pub(crate) RsaPrivateComponents<K>|step 1: the KEM private key's one field
+I1|$R/keys.rs|51|53|-|>> 63 == 1|step 2: has_full_bit_length
+I1|$R/keys.rs|60|67|-|fn check_public_exponent|step 2: the exponent rule
+I1|$R/keys.rs|75|77|-|RSA modulus must be odd|step 2: new, n odd
+I1|$R/keys.rs|84|85|-|Ok(Self { n: *n, e })|step 2: new, the exponent and the construction site
+I1|$R/keys.rs|271|289|-|qInv must be less than p|step 2: validated, the exponent, parities, distinctness and ranges
+I1|$R/keys.rs|298|312|-|*key.q_inv = *q_inv;|step 2: validated, the construction site and the five field writes
+I1|$R/keys.rs|193|201|-|q_inv: self.q_inv.clone()|step 2: clone_in_own_frame
+I1|$R/keys.rs|330|330|-|RsaPrivateKey { components: self.clone()|step 2: key(), a clone
+I1|$R/keys.rs|460|460|-|Self { components, _alg: PhantomData }|step 2: RsaPublicKey::from_components
+I1|$R/keys.rs|577|577|-|Self { components, _alg: PhantomData }|step 2: RsaPrivateKey::from_components
+I1|$R/rsasve.rs|140|143|-|Ok(Self(pk))|step 2: the KEM public key, behind its exponent rule
+I1|$R/rsasve.rs|193|196|-|Ok(Self(sk))|step 2: the KEM private key
+I1|$R/size.rs|419|425|-|nat::sub(x, y).1 == 1|step 2: modulus_from_primes and half_is_less at RSA-2048
+I1|crypto/utils/src/secret.rs|275|275|-|pub struct Secret<T: ZeroizablePrimitive>(T);|step 3: Secret is a plain wrapper
+I1|$R/keys.rs|258|258|-|finish(Self::validated(|step 5: from_crt_components_in_own_frame
+I1|$R/keys.rs|422|422|-|finish(Self::decoded(bytes))|step 5: from_bytes_raw_in_own_frame
+I1|$R/keys.rs|437|437|-|Self::validated(|step 5: decoded ends in validated
+I1|$R/keygen.rs|737|740|-|RsaPublicComponents::<K>::new(sk.n(), PUBLIC_EXPONENT)|step 5: key generation builds through the constructors
+I1|$R/size.rs|49|50|-|sealed::Sealed|H3: RsaSize is sealed
+I1|$R/size.rs|701|703|-|pub trait Sealed|H3: the private module
+F-02|$R/lib.rs|348|351|-|a modulus whose top bit is clear is refused|the crate docs state the refusal of a short modulus
+F-03|$R/rsassa.rs|282|282|-|output.fill(0);|the randomized signer's final zeroizes the buffer first
+F-03|$R/rsassa.rs|319|319|-|output.fill(0);|the deterministic signer's final
+F-03|crypto/core/src/signature_key.rs|275|275|-|output.fill(0);|sign_out_with_signer zeroizes before anything else
+F-03|$R/rsassa.rs|375|379|-|) -> Result<[u8; K_LEN], SignatureError>|sign_from_hash_with_salt returns its result: no buffer
+F-05|$R/rsa_core.rs|215|216|-|i to iv|crt_exp's docs: RFC 8017 5.1.2 numbers the sub-steps i to iv
+flag13|$R/emsa_pss.rs|72|74|-|copy_from_slice(salt)|the same buffer in the encoder: where a foreign 97-byte salt panics
+flag13|$R/rsassa_pss.rs|90|94|-|at most 64|the open trait and its documented salt bound
+flag13|$R/rsassa.rs|160|160|-|A::SALT_LEN <= MAX_HASH_LEN|the bound enforced where the salt is drawn: create_signer
+flag13|$R/rsassa.rs|406|406|-|A::SALT_LEN <= MAX_HASH_LEN|and sign_from_hash
+claims|$R/emsa_pkcs1_v1_5.rs|33|37|-|const MAX_T_LEN|digest_info's doc comment now documents the constant
+claims|$R/emsa_pss.rs|30|46|-|from step 3 onward|two descriptions of emsa_pss_encode_from_hash, one after the other
 TABLE
 echo
 echo "rows: $rows, stale: $stale"

@@ -9,7 +9,8 @@ This is the first pass's tree (baseline `b7e46cb`, kept as the project documents
 `claude/rsa-wp0-audit-*`), ported in plan WP14.3 to the code as it is after the upstream
 response. The plan it serves is the project document `claude/rsa-formal-audit-plan.md` (v3.0);
 session state is in `claude/00-start-here-rsa-audit.md`; what was run with this tree is in
-`claude/rsa-wp14-report.md`.
+`claude/rsa-wp14-report.md` (WP14.1 to 14.3) and `claude/rsa-wp14-report-2.md` (WP14.4, the
+verification of each fix).
 
 ## Layout
 
@@ -21,18 +22,24 @@ session state is in `claude/00-start-here-rsa-audit.md`; what was run with this 
 | `ref/selftest_openssl.py` | The model against OpenSSL (PyPI `cryptography`); optional |
 | `ref/gen_cases.py` | Differential run: writes cases, runs `diff_runner`, judges each result against the model, then alters a sample of results and checks that the judge refuses each (a judge that cannot fail proves nothing) |
 | `ref/make_short_modulus_probe.py` | Generates `harness/tests/data/short_modulus.rs`, the first pass's data for finding F-02; the key it describes is refused now, and the probe asserts that |
+| `ref/pss_interop.py` | Finding F-02, row (d) of plan WP14.4: RSASSA-PSS both ways against the model and OpenSSL at full-length moduli, the least and the greatest a size admits among them. The crate signs under fixed salts (the signing role with an RNG that holds the salt; `sign_from_hash_with_salt`) and each signature must be the model's byte for byte and verify under both; OpenSSL and the model sign and the crate must verify. Altered signatures, messages and parameter sets must be refused on each side |
+| `ref/limb_order_check.py` | Finding F-05, row 3: one byte stream through the crate's key generation and through the model under three readings of `fill_random`; the key must be the documented reading's and no other's |
 | `harness/` | Rust crate that compiles `crypto/rsa/src/*.rs` by path, with probes onto private functions |
 | `harness/src/bin/diff_runner.rs` | Runs differential cases; a panic is a result line, not the end of the run |
 | `harness/src/bin/ct_memcheck.rs`, `harness/check_ct_memcheck.sh`, `harness/judge_memcheck.py` | Secret-independence under Valgrind memcheck: the constructors, the kernel, and whole operations through the public API, at RSA-2048 by default and at every signing size with `SIZES=` |
 | `harness/declassified.txt` | The declassification register: the lines where a secret-derived bit decides control flow by design, each with its argument or marked open. Whole-operation memcheck modes are judged against it |
 | `harness/show_ct_instructions.sh`, `harness/ct_instructions.py` | Which conditional jumps, conditional moves and setcc the binary holds in the machine functions that build a Montgomery context and run the CRT, by source line (finding F-01, row (c)) |
-| `harness/tests/probes.rs` | Behaviours the audit documents state, pinned by tests (debug and release). The first pass's probes of answered concerns are now regression tests of the answers |
-| `harness/compile_checks/`, `harness/check_compile.sh` | Facts that are compile errors, each family with a control that compiles: the verify-only sizes, findings F-04 and F-06, SHA-1 signing. Programs are built, not checked: a `const` assertion fires at instantiation |
+| `harness/tests/probes.rs` | Behaviours the audit documents state, pinned by tests (debug and release). The first pass's probes of answered concerns are now regression tests of the answers. Added in WP14.4: what an error leaves in a signing role's output buffer, and where "an error, never a panic" ends (a caller's own `PssParams` past the documented salt bound; map flag 13, open) |
+| `harness/compile_checks/`, `harness/check_compile.sh` | Facts that are compile errors, each family with a control that compiles: the verify-only sizes, findings F-04 and F-06, the rest of M10's inventory (`m10`), a foreign `PssParams` (`flag13`), the forms in which the language writes a struct value (`lang`, no crate code: the premise of the search `i1`), SHA-1 signing. Programs are built, not checked: a `const` assertion fires at instantiation |
 | `vectors/inventory.py` | Which Wycheproof, bc-test-data and ACVP files exist and which the crate's suite loads |
-| `wp11_lines.sh` | Prints every source line the review, the plan's new obligations and the first pass's register cite, old place beside new, and checks each row against a piece of its text |
+| `wp11_lines.sh` | Prints every source line the review, the plan's new obligations, the first pass's register, the proof of I1 and the report's part 2 cite, old place beside new, and checks each row against a piece of its text |
 | `tools/fn_diff.py` | Function-level diff of Rust sources between two git revisions, comments and assertion statements dropped: what plan WP14.1 uses to confirm which kernel functions are unchanged since the first pass |
+| `tools/listed_searches.py`, `tools/rust_items.py` | Listed searches over the source, each ending with a control (the same search on copies of the source with one edit, which it must report): `i1`, every mention of a key type classified by the form it is written in, so where a key value is constructed, which functions return one, that no field is written from outside, that no macro writes code and the size traits are sealed (finding F-02, row (e); the premises of the proof of I1); `roles`, every role impl with its bound on the size and every call of the raw primitives (F-04, row (b)); `m10`, every function with const generic parameters, whether it is public, the relation between its widths and where it is asserted (F-06, row (b)) |
+| `tools/mir_sites.py` | The first premise of the proof of I1 from the compiler: builds the crate's MIR (`rustc --emit=mir`, stable; dev profile) and lists every aggregate of the six key types with the function it stands in, a derive's expansion included; compares with a table; control: eight ways of writing a key that compile, each on a copy of the workspace, each reported |
 | `tools/test_summary.py`, `tools/q.sh` | A `cargo test` log as one line per test binary and totals; a queue that runs long commands one after another with a log and a status line each (a session's command limit is ten minutes) |
-| `run_wp14.sh` | Re-runs all of the above but the tools; its last line is the WP14.3 gate |
+| `run_wp14.sh` | Re-runs the tree's own evidence (the model's self-test, upstream's unit tests inside the harness, probes, compile checks, the differential run, the cited lines, memcheck); its last line is the WP14.3 gate |
+| `run_wp14_4.sh` | Plan WP14.4, rows F-02 to F-06: what each line of a row rests on, in release and debug builds, ending with one line per line of a row. Needs `PYDEPS` |
+| `logs/wp14_4-<rustc version>/` | The logs of the WP14.4 runs the report's part 2 cites, one file a step and `summary.txt`, for rustc 1.97.0 and 1.88.0. `logs/` is ignored; these were added with `git add -f` |
 | `f01-pin-check.sh` | Finding F-01 at the pin (WP14.4, row F-01 (b)): the second reviewer's memcheck probe pointed at upstream's fix, nine build settings, self-contained: `audit/f01-pin-check.sh <checkout> <work dir>`. The project document `claude/rsa-wp14-f01-pin-check.sh`, byte for byte |
 | `pack.py` | Packs this tree into self-extracting text files, the form in which it is kept as the project documents `claude/rsa-wp14-audit-ref-*` and `claude/rsa-wp14-audit-harness-*` |
 
@@ -47,6 +54,9 @@ mkdir -p ../specs/rfc      # rfc8017.txt and rfc5869.txt (rfc-editor.org, or Deb
 audit/run_wp14.sh                                             # needs valgrind for its steps 7 and 8
 PATH=<1.88.0>/bin:$PATH CARGO_TARGET_DIR=<dir> audit/run_wp14.sh   # the MSRV
 SIZES="3072 4096 8192" audit/harness/check_ct_memcheck.sh     # the other signing sizes
+PYDEPS=<pip --target dir with cryptography> audit/run_wp14_4.sh    # WP14.4, rows F-02 to F-06
+python3 -I audit/tools/listed_searches.py                     # the three listed searches alone
+python3 -I audit/tools/mir_sites.py                           # where a key is built, from the crate's MIR
 ```
 
 The function-level confirmation of WP14.1, and the scoped mutation run of WP14.2 as the

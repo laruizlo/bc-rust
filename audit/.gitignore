@@ -1,4 +1,5 @@
 harness/target/
 harness/examples/
 ref/__pycache__/
+tools/__pycache__/
 logs/

@@ -19,20 +19,23 @@
 use bouncycastle_core::errors::SignatureError;
 use bouncycastle_core::security_strength::SecurityStrength;
 use bouncycastle_core::signature_key::{
-    DeterministicOneShotSigningKey, OneShotSigningKey, OneShotVerifyingKey,
+    DeterministicOneShotSigningKey, DeterministicSigningKey, OneShotSigningKey,
+    OneShotVerifyingKey,
 };
-use bouncycastle_core::traits::PublicKey;
+use bouncycastle_core::traits::{PublicKey, SignatureSigner};
 use bouncycastle_ec::montgomery;
 use bouncycastle_sha2::{SHA256, SHA512};
+use bouncycastle_utils::const_str::ConstStr;
 use rsa_audit_harness::keys::{
     RsaPrivateComponents, RsaPrivateKey, RsaPublicComponents, RsaPublicKey,
 };
 use rsa_audit_harness::modexp::{self, MontgomeryContext};
 use rsa_audit_harness::rsassa::{
-    sign_from_hash, sign_from_hash_deterministic, sign_from_hash_with_salt, verify_from_hash,
+    RsaRandomizedSignatureAlgorithm, RsaSignatureAlgorithm, sign_from_hash,
+    sign_from_hash_deterministic, sign_from_hash_with_salt, verify_from_hash,
 };
 use rsa_audit_harness::rsassa_pkcs1_v1_5::RSASSA_PKCS1_v1_5;
-use rsa_audit_harness::rsassa_pss::RSASSA_PSS;
+use rsa_audit_harness::rsassa_pss::{PssParams, RSASSA_PSS, SaltedPss};
 use rsa_audit_harness::rsasve::{RsaKEMPrivateKey, RsaKEMPublicKey};
 use rsa_audit_harness::size::{RsaSigningSize, RsaSize};
 use rsa_audit_harness::stream_rng::StreamRng;
@@ -375,6 +378,128 @@ fn pss_from_hash_refuses_a_wrong_length_without_a_panic() {
     assert_eq!((rng.calls(), rng.consumed()), (0, 0));
     assert!(sign_from_hash::<Pss, 256>(&sk, &digest, &mut rng).is_ok());
     assert_eq!((rng.calls(), rng.consumed()), (1, 32));
+}
+
+/// Finding F-03, row (a) of plan WP14.4, its last clause ("the output buffer is not written").
+/// The four `*_from_hash` entry points return their result: there is no buffer, and an error
+/// carries no bytes. A buffer exists on the signing roles (`sign_out`,
+/// `sign_deterministic_out`, a signer's final), and the digest those sign is the roles' own,
+/// so a wrong length cannot arise there. What can fail there leaves the buffer zero, whatever
+/// it held: a refused context, an RNG that delivers short, a result that fails its check.
+#[test]
+fn a_failed_signature_leaves_the_output_buffer_zero() {
+    let (pk, sk) = key();
+    let (v15, pss): (RsaPrivateKey<V15>, RsaPrivateKey<Pss>) = (sk.key(), sk.key());
+    let msg = b"an output buffer";
+    let dirty = [0xA5u8; 256];
+    let is_len = |r: Result<usize, SignatureError>| matches!(r, Err(SignatureError::LengthError(_)));
+
+    // A refused context, deterministic and randomized; nothing is drawn for it.
+    let mut out = dirty;
+    assert!(is_len(v15.sign_deterministic_out(msg, Some(b"ctx"), &mut out)));
+    assert_eq!(out, [0u8; 256]);
+    let mut out = dirty;
+    let mut rng = StreamRng::new(stream(21, 64), SecurityStrength::_256bit);
+    assert!(is_len(pss.sign_out(&mut rng, msg, Some(b"ctx"), &mut out)));
+    assert_eq!((out, rng.calls()), ([0u8; 256], 0));
+
+    // An RNG one byte short of the salt.
+    let mut out = dirty;
+    let mut short = StreamRng::new(stream(22, 31), SecurityStrength::_256bit);
+    assert!(matches!(pss.sign_out(&mut short, msg, None, &mut out), Err(SignatureError::RNGError(_))));
+    assert_eq!(out, [0u8; 256]);
+
+    // A result that fails its check (a key that holds a foreign `e`): one-shot, and through
+    // the streaming signer's final.
+    let (p, q, dp, dq, qinv) = api::private_parts::<RSA2048>(sk);
+    let foreign: RsaPrivateKey<V15> =
+        RsaPrivateComponents::<RSA2048>::from_crt_components(&p, &q, &dp, &dq, &qinv, 3)
+            .expect("the constructor does not relate e to the components")
+            .key();
+    let mut out = dirty;
+    assert_eq!(foreign.sign_deterministic_out(msg, None, &mut out), Err(SignatureError::ComputationFault));
+    assert_eq!(out, [0u8; 256]);
+    let mut out = dirty;
+    let mut signer = foreign.create_signer_deterministic(None).unwrap();
+    signer.do_update(msg);
+    assert_eq!(signer.do_final_out(&mut out), Err(SignatureError::ComputationFault));
+    assert_eq!(out, [0u8; 256]);
+
+    // The control: a signature overwrites the buffer, and verifies.
+    let mut out = dirty;
+    assert_eq!(v15.sign_deterministic_out(msg, None, &mut out), Ok(256));
+    assert!(out != dirty && out != [0u8; 256]);
+    let pk: RsaPublicKey<V15> = pk.key();
+    assert!(pk.verify(msg, None, &out).is_ok());
+}
+
+/// A parameter set of a caller's own, as the open `PssParams` trait allows: MGF1 over SHA-256
+/// and a salt of `S` bytes.
+struct OwnSalt<const S: usize>;
+
+impl<const S: usize> PssParams<SHA256> for OwnSalt<S> {
+    const SALT_LEN: usize = S;
+    const NAME_SUFFIX: ConstStr<32> = ConstStr::concat(&["-own"]);
+
+    fn mask(seed: &[u8], mask: &mut [u8]) {
+        mask.fill(0);
+        api::mgf1_xor::<SHA256>(seed, mask);
+    }
+}
+
+impl<const S: usize> SaltedPss for OwnSalt<S> {}
+
+type Own<const S: usize> = RSASSA_PSS<RSA2048, SHA256, OwnSalt<S>>;
+
+/// Where finding F-03's "an error, never a panic" ends: map flag 13, second half, open (plan
+/// E7; for WP7). The fix checks the slices against the lengths the algorithm's type states.
+/// It does not bound those lengths. `PssParams` documents a salt of "at most 64" bytes, and
+/// only the two entry points that draw the salt enforce it (a `const` assertion: the
+/// compile checks, family flag13). `sign_from_hash_with_salt`, `emsa_encode` and
+/// `emsa_verify` take a foreign parameter set as it is: up to hLen + sLen = 128 the encoding
+/// works, and past it the 136-byte `M'` buffer is indexed out of bounds (`emsa_pss.rs:74`,
+/// `:149`): a panic in both profiles, with slices of exactly the lengths asked for.
+#[test]
+fn a_foreign_pss_parameter_set_past_its_documented_salt_bound_panics() {
+    let (pk, sk) = key();
+    let digest = [0x33u8; 32];
+
+    // 96 bytes of salt with SHA-256 fill the buffer exactly: it signs and verifies.
+    let salt = [0x44u8; 97];
+    let sig = sign_from_hash_with_salt::<Own<96>, 256>(&sk.key(), &digest, &salt[..96]).unwrap();
+    assert!(verify_from_hash::<Own<96>, 256>(&pk.key(), &digest, &sig).is_ok());
+
+    // 97 do not. The length checks pass, since the slices are what the type asks for.
+    assert!(panics(|| sign_from_hash_with_salt::<Own<97>, 256>(&sk.key(), &digest, &salt)));
+    assert!(panics(|| Own::<97>::emsa_encode::<256>(&digest, &salt)));
+    // A slice of another length is still the error of F-03's fix, before the buffer is reached.
+    assert!(matches!(
+        sign_from_hash_with_salt::<Own<97>, 256>(&sk.key(), &digest, &salt[..96]),
+        Err(SignatureError::LengthError(_))
+    ));
+
+    // The verifier reaches the same buffer once an encoding has the right shape. Built by
+    // hand: DB = PS || 01 || salt under MGF1(H), for an H whose mask leaves the top bit clear.
+    let db_len = 256 - 32 - 1;
+    let em = (0u8..=255)
+        .find_map(|x| {
+            let h = [x; 32];
+            let mut db = vec![0u8; db_len];
+            db[db_len - 97 - 1] = 0x01;
+            db[db_len - 97..].copy_from_slice(&salt);
+            api::mgf1_xor::<SHA256>(&h, &mut db);
+            (db[0] & 0x80 == 0).then(|| {
+                let mut em = [0u8; 256];
+                em[..db_len].copy_from_slice(&db);
+                em[db_len..255].copy_from_slice(&h);
+                em[255] = 0xbc;
+                em
+            })
+        })
+        .expect("some H gives a mask with its top bit clear");
+    assert!(panics(|| Own::<97>::emsa_verify::<256>(&digest, &em)));
+    // Under the crate's own parameters the same bytes are a refusal, not a panic.
+    assert!(!Pss::emsa_verify::<256>(&digest, &em));
 }
 
 // ---------------------------------------------------------------------------------------

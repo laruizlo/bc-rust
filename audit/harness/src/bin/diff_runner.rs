@@ -6,13 +6,20 @@
 //! (the function returned an error) or `id PANIC message` (it panicked; each case runs under
 //! `catch_unwind`, so a panic is a result, not the end of the run). Integers and limb arrays
 //! are big-endian hex without prefix; byte strings are hex, `-` for the empty string.
-//! `audit/ref/gen_cases.py` writes the cases and judges the results against the model.
+//! `audit/ref/gen_cases.py` writes the cases and judges the results against the model;
+//! `audit/ref/pss_interop.py` does the same for `pss_sign` and `pss_verify`, with OpenSSL as a
+//! second judge, and `audit/ref/limb_order_check.py` for one `keygen` case.
 
 use bouncycastle_core::errors::SignatureError;
 use bouncycastle_core::security_strength::SecurityStrength;
+use bouncycastle_core::signature_key::{
+    DeterministicOneShotSigningKey, OneShotSigningKey, OneShotVerifyingKey,
+};
 use bouncycastle_core::traits::{PrivateKey, PublicKey};
+use bouncycastle_digest::sha1::SHA1;
 use bouncycastle_ec::{montgomery, nat};
-use bouncycastle_sha2::{SHA256, SHA512};
+use bouncycastle_sha2::{SHA256, SHA384, SHA512};
+use bouncycastle_sha3::{SHA3_256, SHAKE128, SHAKE256};
 use core::num::NonZeroUsize;
 use rsa_audit_harness::keygen::probe as kg;
 use rsa_audit_harness::keys::{
@@ -660,6 +667,202 @@ fn emsa(a: &Args) -> Res {
     }
 }
 
+// ---------------------------------------------------------------- PSS interop (finding F-02, row (d))
+
+/// A private key of the algorithm `A`, decoded from the crate's own layout
+/// (`p || q || dP || dQ || qInv || e`): the decoder is one of the paths I1 speaks about.
+fn interop_sk<A, const SK: usize>(a: &Args) -> Result<RsaPrivateKey<A>, String>
+where
+    A: RsaSignatureAlgorithm,
+    A::Size: RsaSigningSize + RsaSize<PrivateKeyEncoded = [u8; SK]>,
+{
+    <RsaPrivateKey<A> as PrivateKey<SK>>::from_bytes(&a.bytes("sk")?)
+        .map_err(|e| format!("the case's private key was refused: {e:?}"))
+}
+
+/// A public key of `A`, decoded from `n || e`.
+fn interop_pk<A, const PK: usize>(a: &Args) -> Result<RsaPublicKey<A>, String>
+where
+    A: RsaSignatureAlgorithm,
+    A::Size: RsaSize<PublicKeyEncoded = [u8; PK]>,
+{
+    <RsaPublicKey<A> as PublicKey<PK>>::from_bytes(&a.bytes("pk")?)
+        .map_err(|e| format!("the case's public key was refused: {e:?}"))
+}
+
+/// A salted PSS signature under the case's salt, two ways. `via=role`: the one-shot signing
+/// role over the message, with an RNG that holds the salt and nothing else, so the result
+/// names how often the RNG was asked and how much it gave. `via=hash`:
+/// `sign_from_hash_with_salt` over the case's digest.
+fn pss_sign_salted<A, const K_LEN: usize, const SK: usize>(a: &Args) -> Res
+where
+    A: RsaRandomizedSignatureAlgorithm,
+    A::Size: RsaSigningSize + RsaSize<Modulus = [u8; K_LEN], PrivateKeyEncoded = [u8; SK]>,
+{
+    let sk = interop_sk::<A, SK>(a)?;
+    let salt = a.bytes("salt")?;
+    match a.raw("via")? {
+        "role" => {
+            let mut rng = StreamRng::new(salt, SecurityStrength::_256bit);
+            // The buffer starts full of ones: a signature is K_LEN bytes written over it.
+            let mut out = [0xffu8; K_LEN];
+            let r = OneShotSigningKey::<A, K_LEN>::sign_out(
+                &sk,
+                &mut rng,
+                &a.bytes("msg")?,
+                None,
+                &mut out,
+            );
+            let mut v = match r {
+                Ok(_) => vec![hex_bytes(&out)],
+                Err(e) => sig_err(e),
+            };
+            v.push(format!("calls={}", rng.calls()));
+            v.push(format!("consumed={}", rng.consumed()));
+            ok(v)
+        }
+        "hash" => ok(sig_out_at(rsassa::sign_from_hash_with_salt::<A, K_LEN>(
+            &sk,
+            &a.bytes("hash")?,
+            &salt,
+        ))),
+        other => Err(format!("unknown via {other}")),
+    }
+}
+
+/// The same for the unsalted parameters, whose keys sign deterministically.
+fn pss_sign_unsalted<A, const K_LEN: usize, const SK: usize>(a: &Args) -> Res
+where
+    A: RsaDeterministicSignatureAlgorithm,
+    A::Size: RsaSigningSize + RsaSize<Modulus = [u8; K_LEN], PrivateKeyEncoded = [u8; SK]>,
+{
+    let sk = interop_sk::<A, SK>(a)?;
+    match a.raw("via")? {
+        "role" => {
+            let mut out = [0xffu8; K_LEN];
+            let r = DeterministicOneShotSigningKey::<A, K_LEN>::sign_deterministic_out(
+                &sk,
+                &a.bytes("msg")?,
+                None,
+                &mut out,
+            );
+            ok(match r {
+                Ok(_) => vec![hex_bytes(&out)],
+                Err(e) => sig_err(e),
+            })
+        }
+        "hash" => ok(sig_out_at(rsassa::sign_from_hash_deterministic::<A, K_LEN>(
+            &sk,
+            &a.bytes("hash")?,
+        ))),
+        other => Err(format!("unknown via {other}")),
+    }
+}
+
+/// Verification two ways: `via=role`, the one-shot verifying role over the message (a
+/// signature of any length); `via=hash`, `verify_from_hash` over the case's digest.
+fn pss_verify<A, const K_LEN: usize, const PK: usize>(a: &Args) -> Res
+where
+    A: RsaSignatureAlgorithm,
+    A::Size: RsaSize<Modulus = [u8; K_LEN], PublicKeyEncoded = [u8; PK]>,
+{
+    let pk = interop_pk::<A, PK>(a)?;
+    let sig = a.bytes("sig")?;
+    let r = match a.raw("via")? {
+        "role" => OneShotVerifyingKey::<A, K_LEN>::verify(&pk, &a.bytes("msg")?, None, &sig),
+        "hash" => {
+            let sig: [u8; K_LEN] =
+                sig.try_into().map_err(|_| "sig: the modulus length".to_string())?;
+            rsassa::verify_from_hash::<A, K_LEN>(&pk, &a.bytes("hash")?, &sig)
+        }
+        other => return Err(format!("unknown via {other}")),
+    };
+    ok(match r {
+        Ok(()) => vec!["VALID".into()],
+        Err(e) => sig_err(e),
+    })
+}
+
+fn sig_out_at<const K: usize>(r: Result<[u8; K], SignatureError>) -> Vec<String> {
+    match r {
+        Ok(sig) => vec![hex_bytes(&sig)],
+        Err(e) => sig_err(e),
+    }
+}
+
+/// The parameter sets of the interop run at the size `$K`, by tag: the conventional pairing
+/// for SHA-256/384/512, SHA3-256 and the two SHAKEs; two spelled ones, where the mask's hash
+/// and the salt length differ from the message hash's; and no salt.
+macro_rules! pss_sign_at {
+    ($K:ty, $kl:literal, $sk:literal, $alg:expr, $a:expr) => {
+        match $alg {
+            "sha256" => pss_sign_salted::<RSASSA_PSS<$K, SHA256>, $kl, $sk>($a),
+            "sha384" => pss_sign_salted::<RSASSA_PSS<$K, SHA384>, $kl, $sk>($a),
+            "sha512" => pss_sign_salted::<RSASSA_PSS<$K, SHA512>, $kl, $sk>($a),
+            "sha3_256" => pss_sign_salted::<RSASSA_PSS<$K, SHA3_256>, $kl, $sk>($a),
+            "shake128" => pss_sign_salted::<RSASSA_PSS<$K, SHAKE128>, $kl, $sk>($a),
+            "shake256" => pss_sign_salted::<RSASSA_PSS<$K, SHAKE256>, $kl, $sk>($a),
+            "sha512_mgf1sha256_32" => {
+                pss_sign_salted::<RSASSA_PSS<$K, SHA512, Mgf1<SHA256, 32>>, $kl, $sk>($a)
+            }
+            "sha256_mgf1sha1_20" => {
+                pss_sign_salted::<RSASSA_PSS<$K, SHA256, Mgf1<SHA1, 20>>, $kl, $sk>($a)
+            }
+            "sha256_nosalt" => {
+                pss_sign_unsalted::<RSASSA_PSS<$K, SHA256, NoSalt<SHA256>>, $kl, $sk>($a)
+            }
+            other => Err(format!("unknown PSS parameter set {other}")),
+        }
+    };
+}
+
+macro_rules! pss_verify_at {
+    ($K:ty, $kl:literal, $pk:literal, $alg:expr, $a:expr) => {
+        match $alg {
+            "sha256" => pss_verify::<RSASSA_PSS<$K, SHA256>, $kl, $pk>($a),
+            "sha384" => pss_verify::<RSASSA_PSS<$K, SHA384>, $kl, $pk>($a),
+            "sha512" => pss_verify::<RSASSA_PSS<$K, SHA512>, $kl, $pk>($a),
+            "sha3_256" => pss_verify::<RSASSA_PSS<$K, SHA3_256>, $kl, $pk>($a),
+            "shake128" => pss_verify::<RSASSA_PSS<$K, SHAKE128>, $kl, $pk>($a),
+            "shake256" => pss_verify::<RSASSA_PSS<$K, SHAKE256>, $kl, $pk>($a),
+            "sha512_mgf1sha256_32" => {
+                pss_verify::<RSASSA_PSS<$K, SHA512, Mgf1<SHA256, 32>>, $kl, $pk>($a)
+            }
+            "sha256_mgf1sha1_20" => {
+                pss_verify::<RSASSA_PSS<$K, SHA256, Mgf1<SHA1, 20>>, $kl, $pk>($a)
+            }
+            "sha256_nosalt" => {
+                pss_verify::<RSASSA_PSS<$K, SHA256, NoSalt<SHA256>>, $kl, $pk>($a)
+            }
+            other => Err(format!("unknown PSS parameter set {other}")),
+        }
+    };
+}
+
+fn pss_sign(a: &Args) -> Res {
+    let alg = a.raw("alg")?;
+    match a.usize("BITS")? {
+        2048 => pss_sign_at!(RSA2048, 256, 648, alg, a),
+        3072 => pss_sign_at!(RSA3072, 384, 968, alg, a),
+        4096 => pss_sign_at!(RSA4096, 512, 1288, alg, a),
+        8192 => pss_sign_at!(RSA8192, 1024, 2568, alg, a),
+        other => Err(format!("no signing key at {other} bits")),
+    }
+}
+
+fn pss_verify_op(a: &Args) -> Res {
+    let alg = a.raw("alg")?;
+    match a.usize("BITS")? {
+        1024 => pss_verify_at!(RSA1024, 128, 136, alg, a),
+        1536 => pss_verify_at!(RSA1536, 192, 200, alg, a),
+        2048 => pss_verify_at!(RSA2048, 256, 264, alg, a),
+        3072 => pss_verify_at!(RSA3072, 384, 392, alg, a),
+        4096 => pss_verify_at!(RSA4096, 512, 520, alg, a),
+        8192 => pss_verify_at!(RSA8192, 1024, 1032, alg, a),
+        other => Err(format!("no size of {other} bits")),
+    }
+}
+
 // ---------------------------------------------------------------- fill_bytes (plan K16)
 
 /// `fill_bytes` against an RNG that fills the buffer and then claims `claim` bytes (`err`: its
@@ -805,6 +1008,8 @@ fn run(op: &str, a: &Args) -> Res {
         },
         "from_hash" => from_hash(a),
         "emsa" => emsa(a),
+        "pss_sign" => pss_sign(a),
+        "pss_verify" => pss_verify_op(a),
         "fill_bytes" => fill_bytes(a),
         "codec" => match l()? {
             1 => codec_round_trip::<1, 8>(a),
