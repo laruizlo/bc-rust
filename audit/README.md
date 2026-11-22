@@ -33,6 +33,7 @@ session state is in `claude/00-start-here-rsa-audit.md`; what was run with this 
 | `tools/fn_diff.py` | Function-level diff of Rust sources between two git revisions, comments and assertion statements dropped: what plan WP14.1 uses to confirm which kernel functions are unchanged since the first pass |
 | `tools/test_summary.py`, `tools/q.sh` | A `cargo test` log as one line per test binary and totals; a queue that runs long commands one after another with a log and a status line each (a session's command limit is ten minutes) |
 | `run_wp14.sh` | Re-runs all of the above but the tools; its last line is the WP14.3 gate |
+| `f01-pin-check.sh` | Finding F-01 at the pin (WP14.4, row F-01 (b)): the second reviewer's memcheck probe pointed at upstream's fix, nine build settings, self-contained: `audit/f01-pin-check.sh <checkout> <work dir>`. The project document `claude/rsa-wp14-f01-pin-check.sh`, byte for byte |
 | `pack.py` | Packs this tree into self-extracting text files, the form in which it is kept as the project documents `claude/rsa-wp14-audit-ref-*` and `claude/rsa-wp14-audit-harness-*` |
 
 ## Run
