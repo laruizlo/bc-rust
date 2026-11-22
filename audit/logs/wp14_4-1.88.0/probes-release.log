@@ -1,0 +1,17 @@
+test a_failed_signature_leaves_the_output_buffer_zero ... ok
+test a_foreign_exponent_fails_signing_but_not_on_every_input ... ok
+test a_key_type_refuses_a_modulus_shorter_than_its_size ... ok
+test a_non_empty_context_is_refused_before_anything_is_drawn ... ok
+test a_signature_public_key_accepts_small_exponents ... ok
+test key_material_is_retyped_freely ... ok
+test p_equal_to_one_is_refused_and_a_context_over_one_still_exists ... ok
+test primes_of_unequal_length_are_refused ... ok
+test private_components_print_redacted ... ok
+test pss_from_hash_refuses_a_wrong_length_without_a_panic ... ok
+test rsa_1024_keeps_a_key_type_without_a_role_and_the_raw_public_primitive ... ok
+test the_key_encodings_carry_an_eight_byte_exponent ... ok
+test a_foreign_pss_parameter_set_past_its_documented_salt_bound_panics ... ok
+test the_short_modulus_key_of_the_first_pass_is_refused ... ok
+test the_raw_primitives_are_public_methods_of_the_size ... ok
+test v1_5_from_hash_refuses_a_digest_of_the_wrong_length ... ok
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s

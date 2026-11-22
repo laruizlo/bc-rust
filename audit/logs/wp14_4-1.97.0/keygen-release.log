@@ -1,0 +1,10 @@
+differential run: profile=release seed=20261122 scale=1.0 families=primality_and_keygen max-width=128 cases=603 (generated in 5.3s, run in 0.4s, runner exit 0)
+operation                    match    expected observation    MISMATCH       PANIC   NO_RESULT     HARNESS
+is_probable_prime              570           0           0           0           0           0           0
+keygen                           6           0           0           0           0           0           0
+random_prime                    27           0           0           0           0           0           0
+TOTAL                          603           0           0           0           0           0           0
+
+judge control: 84 altered result tokens re-judged, 0 still accepted
+
+DIFFERENTIAL RUN PASSED

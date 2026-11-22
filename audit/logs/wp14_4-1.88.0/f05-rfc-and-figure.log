@@ -1,0 +1,6 @@
+RFC 8017 5.2.1 step 2.b.1: "Let s_1 = m^dP mod p and s_2 = m^dQ mod q." -- in the RFC text: True; the same label and formula in rsa_core.rs: True
+RFC 8017 5.2.1 step 2.b.3: "Let h = (s_1 - s_2) * qInv mod p." -- in the RFC text: True; the same label and formula in rsa_core.rs: True
+RFC 8017 5.2.1 step 2.b.4: "Let s = s_2 + q * h." -- in the RFC text: True; the same label and formula in rsa_core.rs: True
+RFC 8017 5.1.2 numbers the same sub-steps ['i', 'ii', 'iii', 'iv', 'v']; rsa_core.rs's doc comment says "i to iv": True
+odd primes below 1024: 171; 1 - prod(1 - 1/p) = 0.838706; keygen.rs says: about 84%, 171 primes, 0.8387
+F-05 ROWS 1 AND 4: AS THE DOCUMENTS SAY

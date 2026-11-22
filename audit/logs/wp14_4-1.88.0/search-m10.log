@@ -1,0 +1,249 @@
+
+=== M10: the width relations of public generic functions (finding F-06, row (b))
+
+-- 1. which modules code outside the crates can name
+   crypto/rsa/src/lib.rs: mod codec; mod eme_oaep; mod emsa_pkcs1_v1_5; mod emsa_pss; pub mod keygen; pub mod keys; mod mgf1; pub mod modexp; pub mod rsa_1024; pub mod rsa_1536; pub mod rsa_2048; pub mod rsa_3072; pub mod rsa_4096; pub mod rsa_8192; mod rsa_core; pub mod rsaes_oaep; pub mod rsassa; pub mod rsassa_pkcs1_v1_5; pub mod rsassa_pss; pub mod rsasve; pub mod rsasve_kdf; pub mod size
+   crypto/ec/src/lib.rs: pub mod barrett; pub mod montgomery
+   crypto/rsa/src/lib.rs: re-exports: ['size::{RSA1024, RSA1536, RSA2048, RSA3072, RSA4096, RSA8192}']
+
+-- 2. every function with const generic parameters of its own
+   where                                  function                                     const parameters         reach
+   crypto/rsa/src/codec.rs:13             limbs_from_be_bytes                          L, BYTES                 crate: module is private to the crate
+   crypto/rsa/src/codec.rs:25             be_bytes_from_limbs                          L, BYTES                 crate: module is private to the crate
+   crypto/rsa/src/emsa_pkcs1_v1_5.rs:69   emsa_pkcs1_v1_5_encode_from_hash             K_LEN                    crate: module is private to the crate
+   crypto/rsa/src/emsa_pkcs1_v1_5.rs:176  emsa_pkcs1_v1_5_verify_from_hash             K_LEN                    crate: module is private to the crate
+   crypto/rsa/src/emsa_pss.rs:47          emsa_pss_encode_from_hash                    K_LEN                    crate: module is private to the crate
+   crypto/rsa/src/emsa_pss.rs:102         emsa_pss_verify_from_hash                    K_LEN                    crate: module is private to the crate
+   crypto/rsa/src/keygen.rs:86            mod_u64                                      N                        crate: private fn
+   crypto/rsa/src/keygen.rs:95            mul_u64_add                                  N                        crate: private fn
+   crypto/rsa/src/keygen.rs:108           div_u64                                      N                        crate: private fn
+   crypto/rsa/src/keygen.rs:145           inverse_of_e_mod                             N                        crate: private fn
+   crypto/rsa/src/keygen.rs:160           is_zero                                      N                        crate: private fn
+   crypto/rsa/src/keygen.rs:165           lt                                           N                        crate: private fn
+   crypto/rsa/src/keygen.rs:169           trailing_zeros                               N                        crate: private fn
+   crypto/rsa/src/keygen.rs:181           leading_zeros                                N                        crate: private fn
+   crypto/rsa/src/keygen.rs:194           mask_to_bits                                 N                        crate: private fn
+   crypto/rsa/src/keygen.rs:205           shr                                          N                        crate: private fn
+   crypto/rsa/src/keygen.rs:217           shl                                          N                        crate: private fn
+   crypto/rsa/src/keygen.rs:230           sub_u64                                      N                        crate: private fn
+   crypto/rsa/src/keygen.rs:239           gcd                                          N                        crate: private fn
+   crypto/rsa/src/keygen.rs:266           div                                          N                        crate: private fn
+   crypto/rsa/src/keygen.rs:309           fill_random                                  N                        crate: private fn
+   crypto/rsa/src/keygen.rs:326           has_small_factor                             N                        crate: private fn
+   crypto/rsa/src/keygen.rs:382           is_probable_prime                            N, N2, N21               PUBLIC: pub fn
+   crypto/rsa/src/keygen.rs:407           is_probable_prime_in_own_frame               N, N2, N21               crate: private fn
+   crypto/rsa/src/keygen.rs:501           candidate                                    N                        crate: private fn
+   crypto/rsa/src/keygen.rs:515           random_prime                                 N, N2, N21               crate: private fn
+   crypto/rsa/src/keygen.rs:545           primes_too_close                             N                        crate: private fn
+   crypto/rsa/src/keygen.rs:607           keygen_from_rng                              HALF, HALF2, HALF21      PUBLIC: pub fn
+   crypto/rsa/src/keygen.rs:661           keygen_in_own_frame                          HALF, HALF2, HALF21      crate: private fn
+   crypto/rsa/src/modexp.rs:48            check_widths                                 L, L2, L21               crate: pub(crate) fn
+   crypto/rsa/src/modexp.rs:71            double_mod_n_vartime                         L                        crate: private fn
+   crypto/rsa/src/modexp.rs:79            pow2_mod_vartime                             L                        crate: private fn
+   crypto/rsa/src/modexp.rs:91            pow2_mod_ct                                  L                        crate: private fn
+   crypto/rsa/src/modexp.rs:101           ct_select_array                              L                        crate: private fn
+   crypto/rsa/src/modexp.rs:110           ct_swap_array                                L                        crate: private fn
+   crypto/rsa/src/modexp.rs:126           redc_normalize                               L, L2, L21               crate: private fn
+   crypto/rsa/src/modexp.rs:141           mont_mul                                     L, L2, L21               crate: private fn
+   crypto/rsa/src/modexp.rs:151           mont_square                                  L, L2, L21               crate: private fn
+   crypto/rsa/src/modexp.rs:160           to_montgomery                                L, L2, L21               crate: private fn
+   crypto/rsa/src/modexp.rs:168           from_montgomery                              L, L2, L21               crate: private fn
+   crypto/rsa/src/modexp.rs:198           mul_mod                                      L, L2, L21               PUBLIC: pub fn
+   crypto/rsa/src/modexp.rs:216           sub_mod                                      N                        PUBLIC: pub fn
+   crypto/rsa/src/modexp.rs:225           ct_shift_in_bit_mod                          N                        crate: private fn
+   crypto/rsa/src/modexp.rs:258           reduce_wide                                  WIDE, NARROW             PUBLIC: pub fn
+   crypto/rsa/src/modexp.rs:352           mod_pow                                      L, L2, L21               PUBLIC: pub fn
+   crypto/rsa/src/modexp.rs:412           mod_pow_public_exponent                      L, L2, L21               PUBLIC: pub fn
+   crypto/rsa/src/rsa_core.rs:46          public_exp                                   L, L2, L21               crate: module is private to the crate
+   crypto/rsa/src/rsa_core.rs:92          wipe_stack_below                             COUNT, FIXED             crate: module is private to the crate
+   crypto/rsa/src/rsa_core.rs:151         crt_exp_checked                              L, L2, L21, HALF, HALF2, HALF21 crate: module is private to the crate
+   crypto/rsa/src/rsa_core.rs:180         crt_exp_checked_in_own_frame                 L, L2, L21, HALF, HALF2, HALF21 crate: module is private to the crate
+   crypto/rsa/src/rsa_core.rs:220         crt_exp                                      L, L2, L21, HALF, HALF2, HALF21 crate: module is private to the crate
+   crypto/rsa/src/rsaes_oaep.rs:218       encrypt                                      N                        crate: private fn
+   crypto/rsa/src/rsaes_oaep.rs:253       decrypt                                      N                        crate: private fn
+   crypto/rsa/src/rsaes_oaep.rs:284       decrypt_in_own_frame                         N                        crate: private fn
+   crypto/rsa/src/rsaes_oaep.rs:325       key_into                                     N                        crate: private fn
+   crypto/rsa/src/rsaes_oaep.rs:538       RsaKEMPrivateKey::recover_out                KEY_LEN                  PUBLIC: method of impl KeyTransportDecryptingKey for RsaKEMPrivateKey
+   crypto/rsa/src/rsassa.rs:61            RsaSignatureAlgorithm::emsa_verify           K_LEN                    PUBLIC: method of pub trait RsaSignatureAlgorithm
+   crypto/rsa/src/rsassa.rs:71            RsaDeterministicSignatureAlgorithm::emsa_encode K_LEN                    PUBLIC: method of pub trait RsaDeterministicSignatureAlgorithm
+   crypto/rsa/src/rsassa.rs:86            RsaRandomizedSignatureAlgorithm::emsa_encode K_LEN                    PUBLIC: method of pub trait RsaRandomizedSignatureAlgorithm
+   crypto/rsa/src/rsassa.rs:115           RsaSigner::set_salt                          N                        PUBLIC: pub method of RsaSigner
+   crypto/rsa/src/rsassa.rs:375           sign_from_hash_with_salt                     K_LEN                    PUBLIC: pub fn
+   crypto/rsa/src/rsassa.rs:397           sign_from_hash                               K_LEN                    PUBLIC: pub fn
+   crypto/rsa/src/rsassa.rs:420           sign_from_hash_deterministic                 K_LEN                    PUBLIC: pub fn
+   crypto/rsa/src/rsassa.rs:442           verify_from_hash                             K_LEN                    PUBLIC: pub fn
+   crypto/rsa/src/rsassa_pkcs1_v1_5.rs:74 RSASSA_PKCS1_v1_5::emsa_verify               K_LEN                    PUBLIC: method of impl RsaSignatureAlgorithm for RSASSA_PKCS1_v1_5
+   crypto/rsa/src/rsassa_pkcs1_v1_5.rs:83 RSASSA_PKCS1_v1_5::emsa_encode               K_LEN                    PUBLIC: method of impl RsaDeterministicSignatureAlgorithm for RSASSA_PKCS1_v1_5
+   crypto/rsa/src/rsassa_pss.rs:233       RSASSA_PSS::emsa_verify                      K_LEN                    PUBLIC: method of impl RsaSignatureAlgorithm for RSASSA_PSS
+   crypto/rsa/src/rsassa_pss.rs:247       RSASSA_PSS::emsa_encode                      K_LEN                    PUBLIC: method of impl RsaRandomizedSignatureAlgorithm for RSASSA_PSS
+   crypto/rsa/src/rsassa_pss.rs:262       RSASSA_PSS::emsa_encode                      K_LEN                    PUBLIC: method of impl RsaDeterministicSignatureAlgorithm for RSASSA_PSS
+   crypto/rsa/src/rsasve.rs:301           secret_value_into                            N                        crate: private fn
+   crypto/rsa/src/rsasve.rs:358           RsasveDecapsulator::recover_in_own_frame     N                        crate: private method of RsasveDecapsulator
+   crypto/rsa/src/rsasve_kdf.rs:91        len_check                                    SS_LEN                   crate: private fn
+   crypto/rsa/src/rsasve_kdf.rs:106       derive                                       N, SS_LEN                crate: private fn
+   crypto/rsa/src/rsasve_kdf.rs:183       RsasveKdfEncapsulator::derive_in_own_frame   N                        crate: private method of RsasveKdfEncapsulator
+   crypto/rsa/src/rsasve_kdf.rs:249       RsasveKdfDecapsulator::derive_in_own_frame   N                        crate: private method of RsasveKdfDecapsulator
+   crypto/ec/src/montgomery.rs:65         widening_mul                                 L, L2                    PUBLIC: pub fn
+   crypto/ec/src/montgomery.rs:74         widening_mul_into                            L, L2                    PUBLIC: pub fn
+   crypto/ec/src/montgomery.rs:132        widening_square                              L, L2                    PUBLIC: pub fn
+   crypto/ec/src/montgomery.rs:186        redc                                         L, L2, L21               PUBLIC: pub fn
+   crypto/ec/src/barrett.rs:47            limbs_from_be_bytes                          L2                       PUBLIC: pub fn
+   crypto/ec/src/barrett.rs:55            limbs_from_be_bytes_into                     L2                       PUBLIC: pub fn
+   crypto/ec/src/barrett.rs:71            reduce                                       L, L2, L1                PUBLIC: pub fn
+   crypto/ec/src/barrett.rs:84            reduce_into                                  L, L2, L1                PUBLIC: pub fn
+   83 functions; 29 of them public
+
+-- 3. the inventory: relation, and where it is asserted
+   crypto/rsa/src/keygen.rs:382: is_probable_prime<N, N2, N21>
+        relation: N2 = 2N, N21 = 2N + 1
+        asserted: const block at keygen.rs:387: const {check_widths::<N, N2, N21>()}
+   crypto/rsa/src/keygen.rs:607: keygen_from_rng<HALF, HALF2, HALF21>
+        relation: HALF2 = 2 HALF, HALF21 = 2 HALF + 1; HALF and HALF2 are also K's limb counts
+        asserted: const block at keygen.rs:615: const {check_widths::<HALF, HALF2, HALF21>()}
+   crypto/rsa/src/modexp.rs:352: mod_pow<L, L2, L21>
+        relation: L2 = 2L, L21 = 2L + 1
+        asserted: const block at modexp.rs:357: const {check_widths::<L, L2, L21>()}
+   crypto/rsa/src/modexp.rs:412: mod_pow_public_exponent<L, L2, L21>
+        relation: L2 = 2L, L21 = 2L + 1
+        asserted: const block at modexp.rs:417: const {check_widths::<L, L2, L21>()}
+   crypto/rsa/src/modexp.rs:198: mul_mod<L, L2, L21>
+        relation: L2 = 2L, L21 = 2L + 1
+        asserted: const block at modexp.rs:203: const {check_widths::<L, L2, L21>()}
+   crypto/rsa/src/modexp.rs:258: reduce_wide<WIDE, NARROW>
+        relation: none: WIDE and NARROW are independent (M8 holds for all widths)
+        asserted: no relation
+   crypto/rsa/src/modexp.rs:216: sub_mod<N>
+        relation: one width
+        asserted: a single parameter
+   crypto/ec/src/barrett.rs:47: limbs_from_be_bytes<L2>
+        relation: one width; a slice longer than 8 L2 bytes is a documented panic (a run-time assert)
+        asserted: a single parameter
+   crypto/ec/src/barrett.rs:55: limbs_from_be_bytes_into<L2>
+        relation: one width; the same run-time assert
+        asserted: a single parameter
+   crypto/ec/src/barrett.rs:71: reduce<L, L2, L1>
+        relation: L2 = 2L, L1 = L + 1
+        asserted: instantiates reduce_into::<L, L2, L1>, which asserts
+   crypto/ec/src/barrett.rs:84: reduce_into<L, L2, L1>
+        relation: L2 = 2L, L1 = L + 1
+        asserted: const block at barrett.rs:90: const {assert!(L2 == 2*L, "reduce's L2 must be exactly 2 * L");assert!(L1 == L + 1, "red
+   crypto/ec/src/montgomery.rs:186: redc<L, L2, L21>
+        relation: L2 = 2L, L21 = 2L + 1
+        asserted: const block at montgomery.rs:191: const {assert!(L2 == 2*L, "redc's L2 must be exactly 2 * L");assert!(L21 == 2*L + 1, "re
+   crypto/ec/src/montgomery.rs:65: widening_mul<L, L2>
+        relation: L2 = 2L
+        asserted: instantiates widening_mul_into with its own parameters (inferred from the argument types), which asserts
+   crypto/ec/src/montgomery.rs:74: widening_mul_into<L, L2>
+        relation: L2 = 2L
+        asserted: const block at montgomery.rs:79: const {assert!(L2 == 2*L, "widening_mul's L2 must be exactly 2 * L")}
+   crypto/ec/src/montgomery.rs:132: widening_square<L, L2>
+        relation: L2 = 2L
+        asserted: const block at montgomery.rs:133: const {assert!(L2 == 2*L, "widening_square's L2 must be exactly 2 * L")}
+   crypto/rsa/src/rsaes_oaep.rs:538: RsaKEMPrivateKey::recover_out<KEY_LEN>
+        relation: KEY_LEN is the caller's buffer (a capacity, not a width)
+        asserted: no relation
+   crypto/rsa/src/rsassa.rs:397: sign_from_hash<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: bound in the signature: Modulus = [u8;K_LEN]
+   crypto/rsa/src/rsassa.rs:420: sign_from_hash_deterministic<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: bound in the signature: Modulus = [u8;K_LEN]
+   crypto/rsa/src/rsassa.rs:375: sign_from_hash_with_salt<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: bound in the signature: Modulus = [u8;K_LEN]
+   crypto/rsa/src/rsassa.rs:442: verify_from_hash<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: bound in the signature: Modulus = [u8;K_LEN]
+   crypto/rsa/src/rsassa.rs:71: RsaDeterministicSignatureAlgorithm::emsa_encode<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: a declaration: asserted in each impl
+   crypto/rsa/src/rsassa.rs:86: RsaRandomizedSignatureAlgorithm::emsa_encode<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: a declaration: asserted in each impl
+   crypto/rsa/src/rsassa.rs:61: RsaSignatureAlgorithm::emsa_verify<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: a declaration: asserted in each impl
+   crypto/rsa/src/rsassa.rs:115: RsaSigner::set_salt<N>
+        relation: N = A::SALT_LEN (a length, not a width)
+        asserted: const block at rsassa.rs:116: const {assert!(N == A::SALT_LEN, "the salt is the algorithm's salt length")}
+   crypto/rsa/src/rsassa_pkcs1_v1_5.rs:83: RSASSA_PKCS1_v1_5::emsa_encode<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: const block at rsassa_pkcs1_v1_5.rs:84: const {assert!(K_LEN == K::K_LEN, "K_LEN is the size's modulus length")}
+   crypto/rsa/src/rsassa_pkcs1_v1_5.rs:74: RSASSA_PKCS1_v1_5::emsa_verify<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: const block at rsassa_pkcs1_v1_5.rs:75: const {assert!(K_LEN == K::K_LEN, "K_LEN is the size's modulus length")}
+   crypto/rsa/src/rsassa_pss.rs:247: RSASSA_PSS::emsa_encode<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: const block at rsassa_pss.rs:251: const {assert!(K_LEN == K::K_LEN, "K_LEN is the size's modulus length")}
+   crypto/rsa/src/rsassa_pss.rs:262: RSASSA_PSS::emsa_encode<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: const block at rsassa_pss.rs:263: const {assert!(K_LEN == K::K_LEN, "K_LEN is the size's modulus length")}
+   crypto/rsa/src/rsassa_pss.rs:233: RSASSA_PSS::emsa_verify<K_LEN>
+        relation: K_LEN = K::K_LEN
+        asserted: const block at rsassa_pss.rs:234: const {assert!(K_LEN == K::K_LEN, "K_LEN is the size's modulus length")}
+
+-- 4. impl blocks with const generic parameters: how each parameter is fixed
+   crypto/rsa/src/keys.rs:503: impl PublicKey for RsaPublicKey: PK_LEN: the size's PublicKeyEncoded
+   crypto/rsa/src/keys.rs:619: impl PrivateKey for RsaPrivateKey: SK_LEN: the size's PrivateKeyEncoded
+   crypto/rsa/src/modexp.rs:291: impl ZeroizablePrimitive for MontgomeryContext: L: free (a length the trait names; no width relation)
+   crypto/rsa/src/modexp.rs:297: impl (inherent) for MontgomeryContext: L: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsaes_oaep.rs:199: impl Clone for OaepParams: LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsaes_oaep.rs:205: impl Copy for OaepParams: LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsaes_oaep.rs:207: impl (inherent) for OaepParams: LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsaes_oaep.rs:356: impl Algorithm for RsaOaepEncapsulator: LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsaes_oaep.rs:363: impl KEMEncapsulator for RsaOaepEncapsulator: N: the size's Modulus; LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsaes_oaep.rs:405: impl Algorithm for RsaOaepDecapsulator: LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsaes_oaep.rs:412: impl KEMDecapsulator for RsaOaepDecapsulator: N: the size's Modulus; LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsaes_oaep.rs:435: impl EncapsulatingKey for RsaKEMPublicKey: N: the size's Modulus; LEN: a length, checked in const blocks at lines 453
+   crypto/rsa/src/rsaes_oaep.rs:461: impl DecapsulatingKey for RsaKEMPrivateKey: N: the size's Modulus; LEN: a length, checked in const blocks at lines 479
+   crypto/rsa/src/rsaes_oaep.rs:489: impl KeyTransportEncryptingKey for RsaKEMPublicKey: N: the size's Modulus; LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsaes_oaep.rs:529: impl KeyTransportDecryptingKey for RsaKEMPrivateKey: N: the size's Modulus; LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsassa.rs:135: impl SigningKey for RsaPrivateKey: K_LEN: the size's Modulus
+   crypto/rsa/src/rsassa.rs:168: impl OneShotSigningKey for RsaPrivateKey: K_LEN: the size's Modulus
+   crypto/rsa/src/rsassa.rs:185: impl DeterministicSigningKey for RsaPrivateKey: K_LEN: the size's Modulus
+   crypto/rsa/src/rsassa.rs:208: impl DeterministicOneShotSigningKey for RsaPrivateKey: K_LEN: the size's Modulus
+   crypto/rsa/src/rsassa.rs:224: impl VerifyingKey for RsaPublicKey: K_LEN: the size's Modulus
+   crypto/rsa/src/rsassa.rs:247: impl OneShotVerifyingKey for RsaPublicKey: K_LEN: the size's Modulus
+   crypto/rsa/src/rsassa.rs:268: impl SignatureSigner for RsaSigner: K_LEN: the size's Modulus
+   crypto/rsa/src/rsassa.rs:305: impl SignatureSigner for RsaDeterministicSigner: K_LEN: the size's Modulus
+   crypto/rsa/src/rsassa.rs:338: impl SignatureVerifier for RsaVerifier: K_LEN: the size's Modulus
+   crypto/rsa/src/rsassa_pss.rs:133: impl PssParams for Mgf1: SALT_LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsassa_pss.rs:148: impl SaltedPss for Mgf1: SALT_LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsasve.rs:251: impl KEMEncapsulator for RsasveEncapsulator: N: the size's Modulus
+   crypto/rsa/src/rsasve.rs:327: impl KEMDecapsulator for RsasveDecapsulator: N: the size's Modulus
+   crypto/rsa/src/rsasve.rs:382: impl EncapsulatingKey for RsaKEMPublicKey: N: the size's Modulus
+   crypto/rsa/src/rsasve.rs:395: impl DecapsulatingKey for RsaKEMPrivateKey: N: the size's Modulus
+   crypto/rsa/src/rsasve.rs:408: impl PrivateKey for RsaKEMPrivateKey: SK_LEN: the size's PrivateKeyEncoded
+   crypto/rsa/src/rsasve.rs:433: impl PublicKey for RsaKEMPublicKey: PK_LEN: the size's PublicKeyEncoded
+   crypto/rsa/src/rsasve_kdf.rs:138: impl Algorithm for RsasveKdfEncapsulator: SS_LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsasve_kdf.rs:145: impl KEMEncapsulator for RsasveKdfEncapsulator: N: the size's Modulus; SS_LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsasve_kdf.rs:176: impl (inherent) for RsasveKdfEncapsulator: SS_LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsasve_kdf.rs:210: impl Algorithm for RsasveKdfDecapsulator: SS_LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsasve_kdf.rs:217: impl KEMDecapsulator for RsasveKdfDecapsulator: N: the size's Modulus; SS_LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsasve_kdf.rs:242: impl (inherent) for RsasveKdfDecapsulator: SS_LEN: free (a length the trait names; no width relation)
+   crypto/rsa/src/rsasve_kdf.rs:265: impl EncapsulatingKey for RsaKEMPublicKey: N: the size's Modulus; SS_LEN: a length, checked in const blocks at lines 284
+   crypto/rsa/src/rsasve_kdf.rs:289: impl DecapsulatingKey for RsaKEMPrivateKey: N: the size's Modulus; SS_LEN: a length, checked in const blocks at lines 307
+   crypto/rsa/src/size.rs:40: impl Array for T: N: free (a length the trait names; no width relation)
+
+-- 5. the crate's own instantiations with literal widths (the routing table), checked numerically
+   be_bytes_from_limbs: 10 literal instantiations, all in relation: <16, 128>, <24, 192>, <32, 256>, <48, 384>, <64, 512>, <128, 1024>
+   crt_exp_checked: 4 literal instantiations, all in relation: <32, 64, 65, 16, 32, 33>, <48, 96, 97, 24, 48, 49>, <64, 128, 129, 32, 64, 65>, <128, 256, 257, 64, 128, 129>
+   keygen_from_rng: 4 literal instantiations, all in relation: <16, 32, 33>, <24, 48, 49>, <32, 64, 65>, <64, 128, 129>
+   limbs_from_be_bytes: 10 literal instantiations, all in relation: <16, 128>, <24, 192>, <32, 256>, <48, 384>, <64, 512>, <128, 1024>
+   public_exp: 6 literal instantiations, all in relation: <16, 32, 33>, <24, 48, 49>, <32, 64, 65>, <48, 96, 97>, <64, 128, 129>, <128, 256, 257>
+   widening_mul: 4 literal instantiations, all in relation: <16, 32>, <24, 48>, <32, 64>, <64, 128>
+
+-- 6. width relations that are still debug assertions
+   crypto/rsa/src/codec.rs:14: in limbs_from_be_bytes (module private to the crate): debug_assert_eq!(BYTES, 8*L, "limbs_from_be_bytes needs BYTES == 8 * L")
+   crypto/rsa/src/codec.rs:26: in be_bytes_from_limbs (module private to the crate): debug_assert_eq!(BYTES, 8*L, "be_bytes_from_limbs needs BYTES == 8 * L")
+   crypto/rsa/src/emsa_pkcs1_v1_5.rs:78: in emsa_pkcs1_v1_5_encode_from_hash (module private to the crate): debug_assert!(K_LEN>= t_len + 11, "emsa_pkcs1_v1_5_encode: modulus too short for this hash")
+
+M10 SEARCH: AS STATED
+
+=== control: each search on a copy of the source with one edit
+   m10   a width check removed: reported (1): modexp.rs:198 mul_mod: no const block naming check_widths
+   m10   a new public generic function: reported (1): public generic functions: found but not in the audit's table: ('modexp.rs', '-', 'extra')
+   m10   a routing entry out of relation: reported (1): size.rs:302: limbs_from_be_bytes::<16, 120> breaks its relation
+control: 3 of 3 edits reported
+
+LISTED SEARCHES: ALL AS STATED, EVERY CONTROL EDIT REPORTED

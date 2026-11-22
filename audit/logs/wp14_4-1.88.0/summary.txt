@@ -1,0 +1,64 @@
+WP14.4, rows F-02 to F-06 -- rustc 1.88.0 (6b00bc388 2025-06-23); 2026-11-22T21:35Z
+HEAD b7f19043d111d69ac758a7f93effd4356ab5adc9  crypto/rsa tree 2ccc36cdc4199053e30674c20888d8b4227288a2
+audit/baseline.sha256: all 27 files match
+
+steps (log: audit/logs/wp14_4-1.88.0/<step>.log)
+  build                              ok      0s      Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+  probes-release                     ok      1s  test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+  constructors-release               ok      1s  DIFFERENTIAL RUN PASSED
+  from-hash-lengths-release          ok      0s  DIFFERENTIAL RUN PASSED
+  probes-debug                       ok      5s  test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.56s
+  constructors-debug                 ok      1s  DIFFERENTIAL RUN PASSED
+  from-hash-lengths-debug            ok      1s  DIFFERENTIAL RUN PASSED
+  pss-interop-release                ok    104s  PSS INTEROP PASSED
+  pss-interop-debug                  ok     23s  PSS INTEROP PASSED
+  search-i1                          ok      2s  LISTED SEARCHES: ALL AS STATED, EVERY CONTROL EDIT REPORTED
+  mir-sites                          ok      8s  MIR SITES: THE COMPILER'S LIST IS THE TABLE'S, EVERY CONTROL EDIT REPORTED
+  search-roles                       ok      1s  LISTED SEARCHES: ALL AS STATED, EVERY CONTROL EDIT REPORTED
+  search-m10                         ok      0s  LISTED SEARCHES: ALL AS STATED, EVERY CONTROL EDIT REPORTED
+  compile-checks                     ok     14s  COMPILE CHECKS: 98 as expected, 0 not
+  cited-lines                        ok      0s  rows: 94, stale: 0
+  keygen-release                     ok      6s  DIFFERENTIAL RUN PASSED
+  keygen-debug                       ok      5s  DIFFERENTIAL RUN PASSED
+  limb-order                         ok      2s  LIMB ORDER CHECK PASSED: the key is the documented reading's and no other's
+  f05-rfc-and-figure                 ok      0s  F-05 ROWS 1 AND 4: AS THE DOCUMENTS SAY
+
+figures
+  constructors, release: key_public accepted: 201; refused: 829 | key_private accepted: 120; refused: 192
+  from_hash_lengths, release: from_hash error DECODING: 9; error LENGTH_HASH: 128; error LENGTH_SALT: 16; error RNG_ERROR: 2; error VERIFICATION_FAILED: 12; value: 11
+      emsa error ENCODING: 1; error LENGTH_HASH: 118; error LENGTH_SALT: 24; value: 43
+  judge controls, release: constructors: judge control: 348 altered result tokens re-judged, 0 still accepted; from_hash_lengths: judge control: 32 altered result tokens re-judged, 0 still accepted
+  probes, release: test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+  PSS interop, release: A the crate signed 558: 558 equal to the model's byte for byte, 558 verified by the model, 434 by OpenSSL (434 by both)
+      B the crate verified 510 signatures of OpenSSL and 650 of the model | controls: the oracles refused 352 of 352 altered inputs; the crate refused 650 of 650
+  constructors, debug: key_public accepted: 201; refused: 829 | key_private accepted: 120; refused: 192
+  from_hash_lengths, debug: from_hash error DECODING: 9; error LENGTH_HASH: 128; error LENGTH_SALT: 16; error RNG_ERROR: 2; error VERIFICATION_FAILED: 12; value: 11
+      emsa error ENCODING: 1; error LENGTH_HASH: 118; error LENGTH_SALT: 24; value: 43
+  judge controls, debug: constructors: judge control: 348 altered result tokens re-judged, 0 still accepted; from_hash_lengths: judge control: 32 altered result tokens re-judged, 0 still accepted
+  probes, debug: test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.56s
+  PSS interop, debug: A the crate signed 117: 117 equal to the model's byte for byte, 117 verified by the model, 91 by OpenSSL (91 by both)
+      B the crate verified 110 signatures of OpenSSL and 140 of the model | controls: the oracles refused 256 of 256 altered inputs; the crate refused 506 of 506
+  compile checks: COMPILE CHECKS: 98 as expected, 0 not (f04: 8 fail, 5 build; f06: 30 fail, 9 build; m10: 17 fail, 5 build; flag13: 2 fail, 2 build; lang: 8 fail, 1 build)
+  key generation, release: keygen 6 0 0 0 0 0 0 (columns: match, expected, observation, MISMATCH, PANIC, NO_RESULT, HARNESS)
+  listed searches: i1: control: 14 of 14 edits reported; roles: control: 2 of 2 edits reported; m10: control: 3 of 3 edits reported
+  the compiler's list: 816 MIR bodies; aggregates of a key type: 17 statements in 15 functions; places inside a key that are assigned or borrowed mutably: 5 statements in 1 function; control: 11 of 11 edits reported
+  cited lines: rows: 94, stale: 0
+
+rows
+  F-02 (a) verdict = I1's predicate, every size      holds
+  F-02 (b) decoders and KEM wrappers, same verdict   holds
+  F-02 (c) the first pass's short keys are refused   holds
+  F-02 (d) PSS both ways, the model and OpenSSL      holds
+  F-02 (e) I1: the proof's premises and its lines    holds
+  F-03 (a) *_from_hash: an error, never a panic      holds
+  F-03 (b) the same through emsa_encode/emsa_verify  holds
+  F-03 (c) the malformed DigestInfo                  holds
+  F-03 (d) RFC 8017 9.1.1 step 3 at its boundary     holds
+  F-04 (a) eight programs do not build, controls do  holds
+  F-04 (b) no role impl bounded by RsaSize alone     holds
+  F-04 (c) what remains: public_exp (N14)            holds
+  F-05     rows 1 to 4                               holds
+  F-06 (a) the triples do not build, controls do     holds
+  F-06 (b) M10's inventory                           holds
+
+WP14.4 ROWS F-02 TO F-06: EVERY STEP PASSED (1.88.0)

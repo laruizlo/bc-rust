@@ -1,0 +1,120 @@
+baseline: all 27 files match audit/baseline.sha256 (HEAD b7f1904)
+ok    F-02  crypto/rsa/src/keys.rs:81-83  (first pass: keys.rs:53-63)  the public constructor refuses a short modulus
+ok    F-02  crypto/rsa/src/keys.rs:293-296  the private side refuses it on p * q
+ok    F-02  crypto/rsa/src/rsasve.rs:139-144  the KEM wrapper keeps only its exponent rule (public)
+ok    F-02  crypto/rsa/src/rsasve.rs:192-197  the same (private)
+ok    F-03  crypto/rsa/src/emsa_pkcs1_v1_5.rs:72-74  (first pass: emsa_pkcs1_v1_5.rs:30-41)  v1.5 encode: the hash's length is an error
+ok    F-03  crypto/rsa/src/emsa_pkcs1_v1_5.rs:180-182  v1.5 verify: false
+ok    F-03  crypto/rsa/src/emsa_pkcs1_v1_5.rs:39  (first pass: emsa_pkcs1_v1_5.rs:34)  digest_info keeps its debug assertion, behind the check
+ok    F-03  crypto/rsa/src/emsa_pss.rs:57-59  (first pass: emsa_pss.rs:43-44)  PSS encode: the hash's length
+ok    F-03  crypto/rsa/src/emsa_pss.rs:60-62  PSS encode: the salt's length
+ok    F-03  crypto/rsa/src/emsa_pss.rs:64-68  RFC 8017 9.1.1 step 3 as EncodingError
+ok    F-03  crypto/rsa/src/emsa_pss.rs:109-111  (first pass: emsa_pss.rs:88)  PSS verify: false
+ok    F-03  crypto/rsa/src/rsassa.rs:407-409  (first pass: rsassa.rs:340)  sign_from_hash checks before it draws
+ok    F-03  crypto/rsa/src/rsassa.rs:451-453  (first pass: rsassa.rs:381)  verify_from_hash reports the length
+ok    F-04  crypto/rsa/src/rsasve.rs:255  (first pass: rsasve.rs:326-328)  RSASVE encapsulation bounded by the signing sizes
+ok    F-04  crypto/rsa/src/rsasve.rs:384  the encapsulating key role
+ok    F-04  crypto/rsa/src/rsasve_kdf.rs:148  (first pass: rsasve_kdf.rs:175-178)  RSASVE-HKDF encapsulation
+ok    F-04  crypto/rsa/src/rsasve_kdf.rs:269  its key role
+ok    F-04  crypto/rsa/src/rsaes_oaep.rs:226  OAEP encryption
+ok    F-04  crypto/rsa/src/rsaes_oaep.rs:366  (first pass: rsaes_oaep.rs:352-354)  OAEP as a KEM, encapsulating
+ok    F-04  crypto/rsa/src/rsaes_oaep.rs:438  OAEP as a KEM, key role
+ok    F-04  crypto/rsa/src/rsaes_oaep.rs:492  (first pass: rsaes_oaep.rs:406-408)  OAEP key transport
+ok    F-04  crypto/rsa/src/lib.rs:374-379  (first pass: lib.rs:346-350)  the docs: nothing encapsulates or transports toward them
+ok    F-05  crypto/rsa/src/rsa_core.rs:240  (first pass: rsa_core.rs:86)  step label, row 1
+ok    F-05  crypto/rsa/src/rsa_core.rs:245  (first pass: rsa_core.rs:91)  step label
+ok    F-05  crypto/rsa/src/rsa_core.rs:250  (first pass: rsa_core.rs:96)  step label
+ok    F-05  crypto/rsa/src/size.rs:105-108  (first pass: size.rs:99-100)  the documented error, row 2
+ok    F-05  crypto/rsa/src/keygen.rs:304-308  (first pass: keygen.rs:286-287)  the limb order of fill_random, row 3
+ok    F-05  crypto/rsa/src/keygen.rs:50-52  (first pass: keygen.rs:49)  trial division's share, row 4
+ok    F-06  crypto/rsa/src/modexp.rs:48-51  the relation, as a const fn
+ok    F-06  crypto/rsa/src/modexp.rs:203  in mul_mod
+ok    F-06  crypto/rsa/src/modexp.rs:357  (first pass: modexp.rs:274-279)  in mod_pow
+ok    F-06  crypto/rsa/src/modexp.rs:417  in mod_pow_public_exponent
+ok    F-06  crypto/rsa/src/keygen.rs:387  in is_probable_prime
+ok    F-06  crypto/rsa/src/keygen.rs:615  (first pass: keygen.rs:523)  in keygen_from_rng
+ok    F-06  crypto/ec/src/montgomery.rs:79  (first pass: montgomery.rs:69)  widening_mul
+ok    F-06  crypto/ec/src/montgomery.rs:133  widening_square
+ok    F-06  crypto/ec/src/montgomery.rs:191-194  (first pass: montgomery.rs:169-170)  redc
+ok    F-06  crypto/ec/src/barrett.rs:90-93  barrett::reduce
+ok    F-06  crypto/rsa/src/rsassa_pkcs1_v1_5.rs:75  K_LEN is the size's, v1.5 verify
+ok    F-06  crypto/rsa/src/rsassa_pkcs1_v1_5.rs:84  v1.5 encode
+ok    F-06  crypto/rsa/src/rsassa_pss.rs:234  PSS verify
+ok    F-06  crypto/rsa/src/rsassa_pss.rs:251  PSS encode, salted
+ok    F-06  crypto/rsa/src/rsassa_pss.rs:263  PSS encode, unsalted
+ok    flag13 crypto/rsa/src/emsa_pss.rs:147-149  the 136-byte M' buffer a foreign PssParams can overrun
+ok    N12   crypto/rsa/src/keys.rs:133-141  the docs on unequal primes, against the constructor at 293-296
+ok    N12   crypto/rsa/src/rsa_core.rs:245-246  the same sentence in crt_exp's comment
+ok    N13   crypto/ec/src/montgomery.rs:20-21  module docs still call the width check a debug assertion
+ok    N14   crypto/rsa/src/size.rs:90-94  public_exp's documented panic
+ok    N14   crypto/rsa/src/size.rs:123-131  the private primitive as a public trait method
+ok    N14   crypto/rsa/src/rsa_core.rs:1-10  the crate says the exponentiations are public
+ok    N14   dev_scripts/rsa_ct_harness/src/bin/memcheck.rs:130  upstream's own harness calls it from outside the crate
+ok    claims crypto/rsa/src/lib.rs:323-347  the three bullets the response added
+ok    claims crypto/rsa/src/modexp.rs:14-26  module docs: which function for which exponent and modulus
+ok    claims crypto/rsa/src/rsa_core.rs:129-149  the checked CRT's docs
+ok    claims crypto/rsa/src/rsa_core.rs:215-219  crt_exp's docs
+ok    I1    crypto/rsa/src/lib.rs:414  H1: no unsafe in the crate
+ok    I1    crypto/rsa/src/keys.rs:45-48  step 1: the public components, private fields
+ok    I1    crypto/rsa/src/keys.rs:153-163  step 1: the private components, private fields
+ok    I1    crypto/rsa/src/keys.rs:444-447  step 1: the signature public key
+ok    I1    crypto/rsa/src/keys.rs:546-549  step 1: the signature private key
+ok    I1    crypto/rsa/src/rsasve.rs:129  step 1: the KEM public key's one field
+ok    I1    crypto/rsa/src/rsasve.rs:172  step 1: the KEM private key's one field
+ok    I1    crypto/rsa/src/keys.rs:51-53  step 2: has_full_bit_length
+ok    I1    crypto/rsa/src/keys.rs:60-67  step 2: the exponent rule
+ok    I1    crypto/rsa/src/keys.rs:75-77  step 2: new, n odd
+ok    I1    crypto/rsa/src/keys.rs:84-85  step 2: new, the exponent and the construction site
+ok    I1    crypto/rsa/src/keys.rs:271-289  step 2: validated, the exponent, parities, distinctness and ranges
+ok    I1    crypto/rsa/src/keys.rs:298-312  step 2: validated, the construction site and the five field writes
+ok    I1    crypto/rsa/src/keys.rs:193-201  step 2: clone_in_own_frame
+ok    I1    crypto/rsa/src/keys.rs:330  step 2: key(), a clone
+ok    I1    crypto/rsa/src/keys.rs:460  step 2: RsaPublicKey::from_components
+ok    I1    crypto/rsa/src/keys.rs:577  step 2: RsaPrivateKey::from_components
+ok    I1    crypto/rsa/src/rsasve.rs:140-143  step 2: the KEM public key, behind its exponent rule
+ok    I1    crypto/rsa/src/rsasve.rs:193-196  step 2: the KEM private key
+ok    I1    crypto/rsa/src/size.rs:419-425  step 2: modulus_from_primes and half_is_less at RSA-2048
+ok    I1    crypto/utils/src/secret.rs:275  step 3: Secret is a plain wrapper
+ok    I1    crypto/rsa/src/keys.rs:258  step 5: from_crt_components_in_own_frame
+ok    I1    crypto/rsa/src/keys.rs:422  step 5: from_bytes_raw_in_own_frame
+ok    I1    crypto/rsa/src/keys.rs:437  step 5: decoded ends in validated
+ok    I1    crypto/rsa/src/keygen.rs:737-740  step 5: key generation builds through the constructors
+ok    I1    crypto/rsa/src/size.rs:49-50  H3: RsaSize is sealed
+ok    I1    crypto/rsa/src/size.rs:701-703  H3: the private module
+ok    F-02  crypto/rsa/src/lib.rs:348-351  the crate docs state the refusal of a short modulus
+ok    F-03  crypto/rsa/src/rsassa.rs:282  the randomized signer's final zeroizes the buffer first
+ok    F-03  crypto/rsa/src/rsassa.rs:319  the deterministic signer's final
+ok    F-03  crypto/core/src/signature_key.rs:275  sign_out_with_signer zeroizes before anything else
+ok    F-03  crypto/rsa/src/rsassa.rs:375-379  sign_from_hash_with_salt returns its result: no buffer
+ok    F-05  crypto/rsa/src/rsa_core.rs:215-216  crt_exp's docs: RFC 8017 5.1.2 numbers the sub-steps i to iv
+ok    flag13 crypto/rsa/src/emsa_pss.rs:72-74  the same buffer in the encoder: where a foreign 97-byte salt panics
+ok    flag13 crypto/rsa/src/rsassa_pss.rs:90-94  the open trait and its documented salt bound
+ok    flag13 crypto/rsa/src/rsassa.rs:160  the bound enforced where the salt is drawn: create_signer
+ok    flag13 crypto/rsa/src/rsassa.rs:406  and sign_from_hash
+ok    claims crypto/rsa/src/emsa_pkcs1_v1_5.rs:33-37  digest_info's doc comment now documents the constant
+ok    claims crypto/rsa/src/emsa_pss.rs:30-46  two descriptions of emsa_pss_encode_from_hash, one after the other
+
+rows: 94, stale: 0
+
+--- I1  every place a key value is put together (struct literals and tuple constructors)
+crypto/rsa/src/keys.rs:85:        Ok(Self { n: *n, e })
+crypto/rsa/src/keys.rs:181:    fn clone(&self) -> Self {
+crypto/rsa/src/keys.rs:192:    fn clone_in_own_frame(&self) -> Self {
+crypto/rsa/src/keys.rs:193:        Self {
+crypto/rsa/src/keys.rs:298:        let mut key = Self {
+crypto/rsa/src/keys.rs:330:        RsaPrivateKey { components: self.clone(), _alg: PhantomData }
+crypto/rsa/src/keys.rs:446:    _alg: PhantomData<A>,
+crypto/rsa/src/keys.rs:459:    pub fn from_components(components: RsaPublicComponents<A::Size>) -> Self {
+crypto/rsa/src/keys.rs:460:        Self { components, _alg: PhantomData }
+crypto/rsa/src/keys.rs:481:    fn clone(&self) -> Self {
+crypto/rsa/src/keys.rs:482:        Self { components: self.components.clone(), _alg: PhantomData }
+crypto/rsa/src/keys.rs:548:    _alg: PhantomData<A>,
+crypto/rsa/src/keys.rs:576:    pub fn from_components(components: RsaPrivateComponents<A::Size>) -> Self {
+crypto/rsa/src/keys.rs:577:        Self { components, _alg: PhantomData }
+crypto/rsa/src/keys.rs:597:    fn clone(&self) -> Self {
+crypto/rsa/src/keys.rs:598:        Self { components: self.components.clone(), _alg: PhantomData }
+crypto/rsa/src/rsasve.rs:143:        Ok(Self(pk))
+crypto/rsa/src/rsasve.rs:196:        Ok(Self(sk))
+crypto/rsa/src/rsaes_oaep.rs:200:    fn clone(&self) -> Self {
+crypto/rsa/src/rsaes_oaep.rs:210:    pub fn new(label: &'l [u8]) -> Self {
+rows: 94, stale: 0

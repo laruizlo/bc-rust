@@ -1,0 +1,148 @@
+
+=== I1: no path builds a key around the constructors (finding F-02, row (e))
+
+-- 1. `unsafe` is forbidden in the crate, none is written, and no macro writes code
+   crypto/rsa/src/lib.rs:414: #![forbid(unsafe_code)]
+   `unsafe` tokens in 23 files (comments and strings apart): 0
+   attributes: allow, cfg, derive, forbid, inline, no_std, should_panic, test; derives: Clone, Copy, Debug, Default, Eq, PartialEq
+   function-like macros outside tests: assert, debug_assert, debug_assert_eq, debug_assert_ne, write; `macro_rules!`: 0
+
+-- 2. the six key types: fields and derives
+   crypto/rsa/src/keys.rs:45: pub struct RsaPublicComponents  #[derive(Clone, Debug, PartialEq, Eq)]
+         fields: n: K::Limbs, e: u64,
+   crypto/rsa/src/keys.rs:153: pub struct RsaPrivateComponents  #[derive(Debug, PartialEq, Eq)]
+         fields: p: Secret<K::HalfLimbs>, q: Secret<K::HalfLimbs>, d_p: Secret<K::HalfLimbs>, d_q: Secret<K::HalfLimbs>, q_inv: Secret<K::HalfLimbs>, n: K::Limbs, e: u
+   crypto/rsa/src/keys.rs:444: pub struct RsaPublicKey  (no derive)
+         fields: components: RsaPublicComponents<A::Size>, _alg: PhantomData<A>,
+   crypto/rsa/src/keys.rs:546: pub struct RsaPrivateKey  (no derive)
+         fields: components: RsaPrivateComponents<A::Size>, _alg: PhantomData<A>,
+   crypto/rsa/src/rsasve.rs:129: pub struct RsaKEMPublicKey  #[derive(Clone, Debug, PartialEq, Eq)]
+         fields: struct RsaKEMPublicKey<K: RsaSize>(pub(crate) RsaPublicComponents<K>)
+   crypto/rsa/src/rsasve.rs:172: pub struct RsaKEMPrivateKey  #[derive(Clone, Debug, PartialEq, Eq)]
+         fields: struct RsaKEMPrivateKey<K: RsaSize>(pub(crate) RsaPrivateComponents<K>)
+   traits of RsaPublicComponents: Clone, Debug, Eq, PartialEq
+   traits of RsaPrivateComponents: Clone, Debug, Eq, PartialEq
+   traits of RsaPublicKey: Clone, Debug, Display, Eq, OneShotVerifyingKey, PartialEq, PublicKey, VerifyingKey
+   traits of RsaPrivateKey: Clone, Debug, DeterministicOneShotSigningKey, DeterministicSigningKey, Eq, OneShotSigningKey, PartialEq, PrivateKey, SigningKey
+   traits of RsaKEMPublicKey: Clone, Debug, Display, EncapsulatingKey, Eq, KeyTransportEncryptingKey, PartialEq, PublicKey
+   traits of RsaKEMPrivateKey: Clone, Debug, DecapsulatingKey, Eq, KeyTransportDecryptingKey, PartialEq, PrivateKey
+   crypto/rsa/src/rsa_2048.rs:46: alias RSA2048KEMPrivateKey = RsaKEMPrivateKey<..>
+   crypto/rsa/src/rsa_2048.rs:48: alias RSA2048KEMPublicKey = RsaKEMPublicKey<..>
+   crypto/rsa/src/rsa_3072.rs:46: alias RSA3072KEMPrivateKey = RsaKEMPrivateKey<..>
+   crypto/rsa/src/rsa_3072.rs:48: alias RSA3072KEMPublicKey = RsaKEMPublicKey<..>
+   crypto/rsa/src/rsa_4096.rs:46: alias RSA4096KEMPrivateKey = RsaKEMPrivateKey<..>
+   crypto/rsa/src/rsa_4096.rs:48: alias RSA4096KEMPublicKey = RsaKEMPublicKey<..>
+   crypto/rsa/src/rsa_8192.rs:42: alias RSA8192KEMPrivateKey = RsaKEMPrivateKey<..>
+   crypto/rsa/src/rsa_8192.rs:44: alias RSA8192KEMPublicKey = RsaKEMPublicKey<..>
+   `use <key type> as <other name>` in the crate: 0
+
+-- 3. construction sites: every mention of a key type, by the form it is written in
+   crypto/rsa/src/size.rs:239: associated type PublicKey = RsaKEMPublicKey<..>
+   crypto/rsa/src/size.rs:240: associated type PrivateKey = RsaKEMPrivateKey<..>
+   equality bounds that bind an associated type to a key type (`Tr<A = Key>`): 0
+   crypto/rsa/src/keys.rs:85: RsaPublicComponents in fn new   [braces]
+   crypto/rsa/src/keys.rs:193: RsaPrivateComponents in fn clone_in_own_frame   [braces]
+   crypto/rsa/src/keys.rs:298: RsaPrivateComponents in fn validated   [braces]
+   crypto/rsa/src/keys.rs:330: RsaPrivateKey in fn key   [braces]
+   crypto/rsa/src/keys.rs:460: RsaPublicKey in fn from_components   [braces]
+   crypto/rsa/src/keys.rs:482: RsaPublicKey in fn clone   [braces]
+   crypto/rsa/src/keys.rs:577: RsaPrivateKey in fn from_components   [braces]
+   crypto/rsa/src/keys.rs:598: RsaPrivateKey in fn clone   [braces]
+   crypto/rsa/src/rsasve.rs:143: RsaKEMPublicKey in fn from_rsa_key   [tuple constructor]
+   crypto/rsa/src/rsasve.rs:196: RsaKEMPrivateKey in fn from_rsa_key   [tuple constructor]
+   (in test modules, not part of the argument: 0)
+   every other mention: a `use` item: 26; a `where Self:` clause: 7; a path to an associated item: 47; a type in a signature or an impl line: 27; a type with its arguments: 133; an alias's definition: 8
+   mentions in no class: 0
+
+-- 4. nothing takes a key by `&mut`, and fields are assigned only while a key is built
+   crypto/rsa/src/keys.rs:307: field `p` assigned in fn validated
+   crypto/rsa/src/keys.rs:308: field `q` assigned in fn validated
+   crypto/rsa/src/keys.rs:309: field `d_p` assigned in fn validated
+   crypto/rsa/src/keys.rs:310: field `d_q` assigned in fn validated
+   crypto/rsa/src/keys.rs:311: field `q_inv` assigned in fn validated
+   methods of a key type with a `&mut self` or `mut self` receiver: 0
+   parameters of type `&mut <key type>` anywhere in the crate: 0
+
+-- 5. every function that returns a key, or hands one to a closure
+   crypto/rsa/src/keygen.rs:607: pub        -::keygen_from_rng
+   crypto/rsa/src/keygen.rs:627: pub(crate) -::keygen_as   [hands the key to `finish`]
+   crypto/rsa/src/keygen.rs:641: private    -::keygen_as_in_own_frame   [hands the key to `finish`]
+   crypto/rsa/src/keygen.rs:661: private    -::keygen_in_own_frame
+   crypto/rsa/src/keys.rs:74: pub        RsaPublicComponents::new
+   crypto/rsa/src/keys.rs:99: pub        RsaPublicComponents::key
+   crypto/rsa/src/keys.rs:104: pub        RsaPublicComponents::into_key
+   crypto/rsa/src/keys.rs:117: pub(crate) RsaPublicComponents::from_bytes_raw
+   crypto/rsa/src/keys.rs:181: trait      RsaPrivateComponents::clone
+   crypto/rsa/src/keys.rs:192: private    RsaPrivateComponents::clone_in_own_frame
+   crypto/rsa/src/keys.rs:215: pub        RsaPrivateComponents::from_crt_components
+   crypto/rsa/src/keys.rs:232: pub(crate) RsaPrivateComponents::from_crt_components_as   [hands the key to `finish`]
+   crypto/rsa/src/keys.rs:249: private    RsaPrivateComponents::from_crt_components_in_own_frame   [hands the key to `finish`]
+   crypto/rsa/src/keys.rs:263: private    RsaPrivateComponents::validated
+   crypto/rsa/src/keys.rs:328: pub        RsaPrivateComponents::key
+   crypto/rsa/src/keys.rs:334: pub        RsaPrivateComponents::into_key
+   crypto/rsa/src/keys.rs:407: pub(crate) RsaPrivateComponents::from_bytes_raw_as   [hands the key to `finish`]
+   crypto/rsa/src/keys.rs:418: private    RsaPrivateComponents::from_bytes_raw_in_own_frame   [hands the key to `finish`]
+   crypto/rsa/src/keys.rs:426: private    RsaPrivateComponents::decoded
+   crypto/rsa/src/keys.rs:454: pub        RsaPublicKey::new
+   crypto/rsa/src/keys.rs:459: pub        RsaPublicKey::from_components
+   crypto/rsa/src/keys.rs:464: pub        RsaPublicKey::components
+   crypto/rsa/src/keys.rs:481: trait      RsaPublicKey::clone
+   crypto/rsa/src/keys.rs:517: trait      RsaPublicKey::from_bytes
+   crypto/rsa/src/keys.rs:560: pub        RsaPrivateKey::from_crt_components
+   crypto/rsa/src/keys.rs:576: pub        RsaPrivateKey::from_components
+   crypto/rsa/src/keys.rs:581: pub        RsaPrivateKey::components
+   crypto/rsa/src/keys.rs:597: trait      RsaPrivateKey::clone
+   crypto/rsa/src/keys.rs:633: trait      RsaPrivateKey::from_bytes
+   crypto/rsa/src/rsasve.rs:135: pub        RsaKEMPublicKey::new
+   crypto/rsa/src/rsasve.rs:139: pub(crate) RsaKEMPublicKey::from_rsa_key
+   crypto/rsa/src/rsasve.rs:179: pub        RsaKEMPrivateKey::from_crt_components
+   crypto/rsa/src/rsasve.rs:192: pub(crate) RsaKEMPrivateKey::from_rsa_key
+   crypto/rsa/src/rsasve.rs:227: pub        RSASVE::keygen
+   crypto/rsa/src/rsasve.rs:421: trait      RsaKEMPrivateKey::from_bytes
+   crypto/rsa/src/rsasve.rs:446: trait      RsaKEMPublicKey::from_bytes
+   crypto/rsa/src/rsasve.rs:457: pub(crate) -::keygen_from
+   crypto/rsa/src/size.rs:109: trait      RsaSigningSize::keygen
+   crypto/rsa/src/size.rs:148: trait      SignatureKeyPair::generate_pkcs1_v1_5_signature_key_pair
+   crypto/rsa/src/size.rs:162: trait      SignatureKeyPair::generate_pss_signature_key_pair
+   crypto/rsa/src/size.rs:176: trait      SignatureKeyPair::generate_pss_signature_key_pair_with
+   crypto/rsa/src/size.rs:185: trait      K::generate_pkcs1_v1_5_signature_key_pair
+   crypto/rsa/src/size.rs:197: trait      K::generate_pss_signature_key_pair
+   crypto/rsa/src/size.rs:207: trait      K::generate_pss_signature_key_pair_with
+   crypto/rsa/src/size.rs:242: trait      K::generate_kem_key_pair
+   crypto/rsa/src/size.rs:405: trait      RSA2048::keygen
+   crypto/rsa/src/size.rs:490: trait      RSA3072::keygen
+   crypto/rsa/src/size.rs:575: trait      RSA4096::keygen
+   crypto/rsa/src/size.rs:660: trait      RSA8192::keygen
+
+-- 6. the size traits are sealed: the six markers are the only sizes
+   crypto/rsa/src/size.rs:49: pub trait RsaSize: sealed::Sealed + Copy + Clone + Debug + Default + PartialEq + Eq + 'static
+   crypto/rsa/src/size.rs:99: pub trait RsaSigningSize: RsaSize
+   crypto/rsa/src/size.rs:701: private mod sealed
+   crypto/rsa/src/size.rs:283: impl sealed::Sealed for RSA1024
+   crypto/rsa/src/size.rs:324: impl sealed::Sealed for RSA1536
+   crypto/rsa/src/size.rs:365: impl sealed::Sealed for RSA2048
+   crypto/rsa/src/size.rs:450: impl sealed::Sealed for RSA3072
+   crypto/rsa/src/size.rs:535: impl sealed::Sealed for RSA4096
+   crypto/rsa/src/size.rs:620: impl sealed::Sealed for RSA8192
+   `const _: () = check_lengths::<..>()` beside the impls, at crypto/rsa/src/size.rs:318, 359, 400, 485, 570, 655
+
+I1 SEARCH: AS STATED
+
+=== control: each search on a copy of the source with one edit
+   i1    a constructor that skips the checks: reported (2): construction sites: found but not in the audit's table: ('RsaPublicComponents', 'unchecked')
+   i1    a public field: reported (1): RsaPublicComponents has a field that is not private
+   i1    a method that takes a key by &mut: reported (1): mutable receivers: ['crypto/rsa/src/rsasve.rs:154 replace']
+   i1    a tuple constructor outside from_rsa_key: reported (2): construction sites: found but not in the audit's table: ('RsaKEMPublicKey', 'forged')
+   i1    a constructor written on an alias of a key type: reported (2): construction sites: found but not in the audit's table: ('RsaKEMPublicKey', 'forged')
+   i1    a tuple constructor passed as a function: reported (1): construction sites: found but not in the audit's table: ('RsaKEMPublicKey', 'forged')
+   i1    a tuple key written with braces: reported (1): construction sites: found but not in the audit's table: ('RsaKEMPublicKey', 'forged')
+   i1    a struct expression with generic arguments: reported (1): construction sites: found but not in the audit's table: ('RsaPublicComponents', 'unchecked_e')
+   i1    a key written through an associated type: reported (1): construction sites: found but not in the audit's table: ('RsaKEMPublicKey', 'generate_kem_key_pair')
+   i1    a key written through an associated type of a parameter: reported (2): an equality bound names a key type: ['crypto/rsa/src/rsasve_kdf.rs:93: PublicKey = RsaKEMPublicKey']
+   i1    an alias of an alias of a key type: reported (2): aliases of a key type: found but not in the audit's table: ('Again', 'RsaKEMPublicKey')
+   i1    an alias of an associated type that is a key: reported (1): aliases of a key type: found but not in the audit's table: ('Projected', 'RsaKEMPublicKey')
+   i1    a derive from a dependency: reported (2): a derive that is not the language's own: ['FromBytes']
+   i1    a trait that makes a key from nothing: reported (2): traits implemented for RsaPublicComponents: found but not in the audit's table: Default
+control: 14 of 14 edits reported
+
+LISTED SEARCHES: ALL AS STATED, EVERY CONTROL EDIT REPORTED

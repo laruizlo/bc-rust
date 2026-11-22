@@ -1,0 +1,13 @@
+differential run: profile=debug seed=20261122 scale=1.0 families=from_hash_lengths max-width=128 cases=364 (generated in 0.7s, run in 0.4s, runner exit 0)
+operation                    match    expected observation    MISMATCH       PANIC   NO_RESULT     HARNESS
+emsa                           186           0           0           0           0           0           0
+from_hash                      178           0           0           0           0           0           0
+TOTAL                          364           0           0           0           0           0           0
+
+what the model predicted for the response's operations:
+  emsa               error ENCODING: 1; error LENGTH_HASH: 118; error LENGTH_SALT: 24; value: 43
+  from_hash          error DECODING: 9; error LENGTH_HASH: 128; error LENGTH_SALT: 16; error RNG_ERROR: 2; error VERIFICATION_FAILED: 12; value: 11
+
+judge control: 32 altered result tokens re-judged, 0 still accepted
+
+DIFFERENTIAL RUN PASSED

@@ -1,0 +1,64 @@
+PSS interop: seed=20261122 scale=1.0 sizes=1024,1536,2048,3072,4096,8192 cases=2368 (keys in 62.2s, runner in 8.4s, exit 0)
+OpenSSL: cryptography 50.0.2, OpenSSL 4.0.3 29 Sep 2026
+keys: RSA-1024 least e=0x10001 (n = 2^1023 + a 521-bit number); RSA-1024 greatest e=0x10001; RSA-1536 random e=0x10001; RSA-2048 least e=0x10001 (n = 2^2047 + a 1033-bit number); RSA-2048 greatest e=0x10001; RSA-2048 random e=0x10001; RSA-2048 random e=0x3; RSA-2048 random e=0xffffffffffffffff; RSA-3072 least e=0x10001 (n = 2^3071 + a 1548-bit number); RSA-3072 greatest e=0x10001; RSA-3072 random e=0x100000001; RSA-4096 least e=0x10001 (n = 2^4095 + a 2061-bit number); RSA-4096 random e=0xfffffffffffffb; RSA-8192 random e=0x10001
+
+ size parameters             | crate signs  = model model ok OpenSSL ok  oracles refuse | OpenSSL->crate model->crate  crate refuses
+ 1024 sha256                 |           0        0        0          0       0/0       |      8/8           8/8          12/12     
+ 1024 sha384                 |           0        0        0          0       0/0       |      8/8           8/8          12/12     
+ 1024 sha3_256               |           0        0        0          0       0/0       |      8/8           8/8          12/12     
+ 1024 sha512_mgf1sha256_32   |           0        0        0          0       0/0       |      8/8           8/8           8/8      
+ 1024 sha256_mgf1sha1_20     |           0        0        0          0       0/0       |      8/8           8/8          12/12     
+ 1024 sha256_nosalt          |           0        0        0          0       0/0       |      8/8           8/8          12/12     
+ 1024 shake128               |           0        0        0          0       0/0       |      0/0           8/8           6/6      
+ 1536 sha256                 |           0        0        0          0       0/0       |      4/4           4/4           6/6      
+ 1536 sha384                 |           0        0        0          0       0/0       |      4/4           4/4           6/6      
+ 1536 sha512                 |           0        0        0          0       0/0       |      4/4           4/4           6/6      
+ 1536 sha3_256               |           0        0        0          0       0/0       |      4/4           4/4           6/6      
+ 1536 sha512_mgf1sha256_32   |           0        0        0          0       0/0       |      4/4           4/4           6/6      
+ 1536 sha256_mgf1sha1_20     |           0        0        0          0       0/0       |      4/4           4/4           6/6      
+ 1536 sha256_nosalt          |           0        0        0          0       0/0       |      4/4           4/4           6/6      
+ 1536 shake128               |           0        0        0          0       0/0       |      0/0           4/4           3/3      
+ 1536 shake256               |           0        0        0          0       0/0       |      0/0           4/4           3/3      
+ 2048 sha256                 |          40       40       40         40      20/20      |     40/40         40/40         30/30     
+ 2048 sha384                 |          40       40       40         40      20/20      |     40/40         40/40         30/30     
+ 2048 sha512                 |          40       40       40         40      20/20      |     40/40         40/40         30/30     
+ 2048 sha3_256               |          40       40       40         40      20/20      |     40/40         40/40         30/30     
+ 2048 sha512_mgf1sha256_32   |          40       40       40         40      20/20      |     40/40         40/40         30/30     
+ 2048 sha256_mgf1sha1_20     |          40       40       40         40      20/20      |     40/40         40/40         30/30     
+ 2048 sha256_nosalt          |          40       40       40         40      20/20      |     40/40         40/40         30/30     
+ 2048 shake128               |          40       40       40          0      10/10      |      0/0          40/40         15/15     
+ 2048 shake256               |          40       40       40          0      10/10      |      0/0          40/40         15/15     
+ 3072 sha256                 |          12       12       12         12      12/12      |     12/12         12/12         18/18     
+ 3072 sha384                 |          12       12       12         12      12/12      |     12/12         12/12         18/18     
+ 3072 sha512                 |          12       12       12         12      12/12      |     12/12         12/12         18/18     
+ 3072 sha3_256               |          12       12       12         12      12/12      |     12/12         12/12         18/18     
+ 3072 sha512_mgf1sha256_32   |          12       12       12         12      12/12      |     12/12         12/12         18/18     
+ 3072 sha256_mgf1sha1_20     |          12       12       12         12      12/12      |     12/12         12/12         18/18     
+ 3072 sha256_nosalt          |          12       12       12         12      12/12      |     12/12         12/12         18/18     
+ 3072 shake128               |          12       12       12          0       6/6       |      0/0          12/12          9/9      
+ 3072 shake256               |          12       12       12          0       6/6       |      0/0          12/12          9/9      
+ 4096 sha256                 |           8        8        8          8       8/8       |      8/8           8/8          12/12     
+ 4096 sha384                 |           8        8        8          8       8/8       |      8/8           8/8          12/12     
+ 4096 sha512                 |           8        8        8          8       8/8       |      8/8           8/8          12/12     
+ 4096 sha3_256               |           8        8        8          8       8/8       |      8/8           8/8          12/12     
+ 4096 sha512_mgf1sha256_32   |           8        8        8          8       8/8       |      8/8           8/8          12/12     
+ 4096 sha256_mgf1sha1_20     |           8        8        8          8       8/8       |      8/8           8/8          12/12     
+ 4096 sha256_nosalt          |           8        8        8          8       8/8       |      8/8           8/8          12/12     
+ 4096 shake128               |           8        8        8          0       4/4       |      0/0           8/8           6/6      
+ 4096 shake256               |           8        8        8          0       4/4       |      0/0           8/8           6/6      
+ 8192 sha256                 |           2        2        2          2       4/4       |      2/2           2/2           6/6      
+ 8192 sha384                 |           2        2        2          2       4/4       |      2/2           2/2           6/6      
+ 8192 sha512                 |           2        2        2          2       4/4       |      2/2           2/2           6/6      
+ 8192 sha3_256               |           2        2        2          2       4/4       |      2/2           2/2           6/6      
+ 8192 sha512_mgf1sha256_32   |           2        2        2          2       4/4       |      2/2           2/2           6/6      
+ 8192 sha256_mgf1sha1_20     |           2        2        2          2       4/4       |      2/2           2/2           6/6      
+ 8192 sha256_nosalt          |           2        2        2          2       4/4       |      2/2           2/2           6/6      
+ 8192 shake128               |           2        2        2          0       2/2       |      0/0           2/2           3/3      
+ 8192 shake256               |           2        2        2          0       2/2       |      0/0           2/2           3/3      
+
+A  the crate signed 558: 558 equal to the model's byte for byte, 558 verified by the model, 434 by OpenSSL (434 by both)
+B  the crate verified 510 signatures of OpenSSL and 650 of the model
+controls: the oracles refused 352 of 352 altered inputs; the crate refused 650 of 650
+floor (256 of each kind): met
+
+PSS INTEROP PASSED

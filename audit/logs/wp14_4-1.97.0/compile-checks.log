@@ -1,0 +1,99 @@
+ok   fail_rsa1024_decapsulating_role: does not build (error[E0599], mentions "no method named `decaps`")
+ok   fail_rsa1024_private_components: does not build (error[E0599], mentions "RsaSigningSize")
+ok   fail_rsa1024_signing_role: does not build (error[E0599], mentions "RsaSigningSize")
+ok   fail_rsa1536_keygen: does not build (error[E0277], mentions "RsaSigningSize")
+ok   pass_rsa2048_control: builds
+ok   fail_f04_rsasve_rsa1024: does not build (error[E0277], mentions "RsaSigningSize")
+ok   fail_f04_rsasve_rsa1536: does not build (error[E0277], mentions "RsaSigningSize")
+ok   pass_f04_rsasve_rsa2048: builds
+ok   fail_f04_rsasve_hkdf_rsa1024: does not build (error[E0277], mentions "RsaSigningSize")
+ok   fail_f04_rsasve_hkdf_rsa1536: does not build (error[E0277], mentions "RsaSigningSize")
+ok   pass_f04_rsasve_hkdf_rsa2048: builds
+ok   fail_f04_oaep_kem_rsa1024: does not build (error[E0277], mentions "RsaSigningSize")
+ok   fail_f04_oaep_kem_rsa1536: does not build (error[E0277], mentions "RsaSigningSize")
+ok   pass_f04_oaep_kem_rsa2048: builds
+ok   fail_f04_oaep_transport_rsa1024: does not build (error[E0277], mentions "RsaSigningSize")
+ok   fail_f04_oaep_transport_rsa1536: does not build (error[E0277], mentions "RsaSigningSize")
+ok   pass_f04_oaep_transport_rsa2048: builds
+ok   pass_f04_all_four_called_rsa2048: builds
+ok   fail_f06_mod_pow_l21_short: does not build (error[E0080], mentions "the accumulator width L21 must be 2 * L + 1")
+ok   fail_f06_mod_pow_l2_long: does not build (error[E0080], mentions "the double width L2 must be 2 * L")
+ok   fail_f06_mod_pow_l2_short: does not build (error[E0080], mentions "the double width L2 must be 2 * L")
+ok   fail_f06_mod_pow_l21_long: does not build (error[E0080], mentions "the accumulator width L21 must be 2 * L + 1")
+ok   pass_f06_mod_pow: builds
+ok   fail_f06_mul_mod_l21_short: does not build (error[E0080], mentions "the accumulator width L21 must be 2 * L + 1")
+ok   fail_f06_mul_mod_l2_long: does not build (error[E0080], mentions "the double width L2 must be 2 * L")
+ok   fail_f06_mul_mod_l2_short: does not build (error[E0080], mentions "the double width L2 must be 2 * L")
+ok   fail_f06_mul_mod_l21_long: does not build (error[E0080], mentions "the accumulator width L21 must be 2 * L + 1")
+ok   pass_f06_mul_mod: builds
+ok   fail_f06_mod_pow_public_exponent_l21_short: does not build (error[E0080], mentions "the accumulator width L21 must be 2 * L + 1")
+ok   fail_f06_mod_pow_public_exponent_l2_long: does not build (error[E0080], mentions "the double width L2 must be 2 * L")
+ok   fail_f06_mod_pow_public_exponent_l2_short: does not build (error[E0080], mentions "the double width L2 must be 2 * L")
+ok   fail_f06_mod_pow_public_exponent_l21_long: does not build (error[E0080], mentions "the accumulator width L21 must be 2 * L + 1")
+ok   pass_f06_mod_pow_public_exponent: builds
+ok   fail_f06_is_probable_prime_l21_short: does not build (error[E0080], mentions "the accumulator width L21 must be 2 * L + 1")
+ok   fail_f06_is_probable_prime_l2_long: does not build (error[E0080], mentions "the double width L2 must be 2 * L")
+ok   fail_f06_is_probable_prime_l2_short: does not build (error[E0080], mentions "the double width L2 must be 2 * L")
+ok   fail_f06_is_probable_prime_l21_long: does not build (error[E0080], mentions "the accumulator width L21 must be 2 * L + 1")
+ok   pass_f06_is_probable_prime: builds
+ok   fail_f06_keygen_from_rng_half21_short: does not build (error[E0080], mentions "the accumulator width L21 must be 2 * L + 1")
+ok   fail_f06_keygen_from_rng_half21_long: does not build (error[E0080], mentions "the accumulator width L21 must be 2 * L + 1")
+ok   pass_f06_keygen_from_rng: builds
+ok   fail_f06_ec_widening_mul_l2_long: does not build (error[E0080], mentions "widening_mul's L2 must be exactly 2 * L")
+ok   fail_f06_ec_widening_mul_l2_short: does not build (error[E0080], mentions "widening_mul's L2 must be exactly 2 * L")
+ok   pass_f06_ec_widening_mul: builds
+ok   fail_f06_ec_widening_square_l2_long: does not build (error[E0080], mentions "widening_square's L2 must be exactly 2 * L")
+ok   fail_f06_ec_widening_square_l2_short: does not build (error[E0080], mentions "widening_square's L2 must be exactly 2 * L")
+ok   pass_f06_ec_widening_square: builds
+ok   fail_f06_ec_redc_l21_short: does not build (error[E0080], mentions "redc's L")
+ok   fail_f06_ec_redc_l2_long: does not build (error[E0080], mentions "redc's L")
+ok   fail_f06_ec_redc_l2_short: does not build (error[E0080], mentions "redc's L")
+ok   fail_f06_ec_redc_l21_long: does not build (error[E0080], mentions "redc's L")
+ok   pass_f06_ec_redc: builds
+ok   fail_f06_ec_barrett_reduce_l2_long: does not build (error[E0080], mentions "reduce's L")
+ok   fail_f06_ec_barrett_reduce_l2_short: does not build (error[E0080], mentions "reduce's L")
+ok   fail_f06_ec_barrett_reduce_l1_short: does not build (error[E0080], mentions "reduce's L")
+ok   fail_f06_ec_barrett_reduce_l1_long: does not build (error[E0080], mentions "reduce's L")
+ok   pass_f06_ec_barrett_reduce: builds
+ok   fail_m10_ec_widening_mul_into_l2_long: does not build (error[E0080], mentions "widening_mul's L2 must be exactly 2 * L")
+ok   fail_m10_ec_widening_mul_into_l2_short: does not build (error[E0080], mentions "widening_mul's L2 must be exactly 2 * L")
+ok   pass_m10_ec_widening_mul_into: builds
+ok   fail_m10_ec_barrett_reduce_into_l2_long: does not build (error[E0080], mentions "reduce's L")
+ok   fail_m10_ec_barrett_reduce_into_l1_short: does not build (error[E0080], mentions "reduce's L")
+ok   pass_m10_ec_barrett_reduce_into: builds
+ok   fail_m10_v15_emsa_verify_k_len_128: does not build (error[E0080], mentions "K_LEN is the size's modulus length")
+ok   fail_m10_v15_emsa_encode_k_len_128: does not build (error[E0080], mentions "K_LEN is the size's modulus length")
+ok   fail_m10_pss_emsa_verify_k_len_128: does not build (error[E0080], mentions "K_LEN is the size's modulus length")
+ok   fail_m10_pss_emsa_encode_k_len_128: does not build (error[E0080], mentions "K_LEN is the size's modulus length")
+ok   fail_m10_pss_unsalted_emsa_encode_k_len_128: does not build (error[E0080], mentions "K_LEN is the size's modulus length")
+ok   pass_m10_emsa_at_the_size: builds
+ok   fail_m10_sign_from_hash_with_salt_k_len_128: does not build (error[E0271], mentions "Modulus")
+ok   fail_m10_sign_from_hash_k_len_128: does not build (error[E0271], mentions "Modulus")
+ok   fail_m10_sign_from_hash_deterministic_k_len_128: does not build (error[E0271], mentions "Modulus")
+ok   fail_m10_verify_from_hash_k_len_128: does not build (error[E0271], mentions "Modulus")
+ok   pass_m10_from_hash_at_the_size: builds
+ok   fail_m10_keygen_from_rng_half2_long: does not build (error[E0271], mentions "Limbs")
+ok   fail_m10_keygen_from_rng_half2_short: does not build (error[E0271], mentions "Limbs")
+ok   fail_m10_keygen_from_rng_half_short: does not build (error[E0271], mentions "HalfLimbs")
+ok   fail_m10_set_salt_31: does not build (error[E0080], mentions "the salt is the algorithm's salt length")
+ok   pass_m10_set_salt_32: builds
+ok   fail_flag13_sign_from_hash_salt_100: does not build (error[E0080], mentions "the salt fits the buffer")
+ok   fail_flag13_create_signer_salt_100: does not build (error[E0080], mentions "the salt fits the signer's buffer")
+ok   pass_flag13_drawing_entry_points_salt_64: builds
+ok   pass_flag13_taking_entry_points_salt_100: builds
+ok   pass_lang_forms_that_construct: builds
+ok   fail_lang_alias_as_function: does not build (error[E0423], mentions "type alias")
+ok   fail_lang_associated_type_as_function: does not build (error[E0575], mentions "found associated type")
+ok   fail_lang_qualified_path_with_braces: does not build (error[E0658], mentions "qualified paths")
+ok   fail_lang_associated_type_of_a_concrete_type: does not build (error[E0223], mentions "ambiguous associated type")
+ok   fail_lang_private_field_with_braces: does not build (error[E0451], mentions "private")
+ok   fail_lang_private_field_of_a_tuple_struct: does not build (error[E0423], mentions "private fields")
+ok   fail_lang_private_field_through_an_alias: does not build (error[E0451], mentions "private")
+ok   fail_lang_associated_type_of_a_parameter_without_a_bound: does not build (error[E0071], mentions "expected struct")
+ok   fail_sha1_v15_signs: does not build (error[E0277], mentions "CollisionResistantHash")
+ok   fail_sha1_pss_signs: does not build (error[E0277], mentions "CollisionResistantHash")
+ok   pass_sha1_v15_signs_with_sha256: builds
+ok   pass_sha1_pss_signs_with_sha256: builds
+ok   pass_sha1_v15_verifies: builds
+ok   pass_sha1_v15_signs_when_named_without_collision_resistance: builds
+COMPILE CHECKS: 98 as expected, 0 not

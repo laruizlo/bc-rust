@@ -1,0 +1,5 @@
+crate: RSA-2048 key from a 1048576-byte stream, 238336 bytes consumed, p = f0c6d6cd65ced00e...
+model, as documented now: draw i is limb i, big-endian within the limb: the same key (p = f0c6d6cd65ced00e..., 238336 bytes consumed)
+model, as documented at the first pass: the whole string one big-endian integer: another key (p = df51dd58d9a5d4ed..., 175872 bytes consumed)
+model, draw i is limb i, little-endian within the limb: another key (p = cdd9da6e75f3de6a..., 131456 bytes consumed)
+LIMB ORDER CHECK PASSED: the key is the documented reading's and no other's

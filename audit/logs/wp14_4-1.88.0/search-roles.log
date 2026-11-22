@@ -1,0 +1,95 @@
+
+=== Roles and the size they are bounded by (finding F-04, row (b))
+
+-- 1. every impl of a role trait, with the bound on its size parameter
+   role                                     trait                           for                      bound           where
+   public key: encapsulates or transports   KEMEncapsulator                 RsaOaepEncapsulator      RsaSigningSize  crypto/rsa/src/rsaes_oaep.rs:363
+   private key: decapsulates or recovers    KEMDecapsulator                 RsaOaepDecapsulator      RsaSigningSize  crypto/rsa/src/rsaes_oaep.rs:412
+   public key: encapsulates or transports   EncapsulatingKey                RsaKEMPublicKey          RsaSigningSize  crypto/rsa/src/rsaes_oaep.rs:435
+   private key: decapsulates or recovers    DecapsulatingKey                RsaKEMPrivateKey         RsaSigningSize  crypto/rsa/src/rsaes_oaep.rs:461
+   public key: encapsulates or transports   KeyTransportEncryptingKey       RsaKEMPublicKey          RsaSigningSize  crypto/rsa/src/rsaes_oaep.rs:489
+   private key: decapsulates or recovers    KeyTransportDecryptingKey       RsaKEMPrivateKey         RsaSigningSize  crypto/rsa/src/rsaes_oaep.rs:529
+   private key: signs                       SigningKey                      RsaPrivateKey            RsaSigningSize  crypto/rsa/src/rsassa.rs:135
+   private key: signs                       OneShotSigningKey               RsaPrivateKey            RsaSigningSize  crypto/rsa/src/rsassa.rs:168
+   private key: signs                       DeterministicSigningKey         RsaPrivateKey            RsaSigningSize  crypto/rsa/src/rsassa.rs:185
+   private key: signs                       DeterministicOneShotSigningKey  RsaPrivateKey            RsaSigningSize  crypto/rsa/src/rsassa.rs:208
+   public key: verifies                     VerifyingKey                    RsaPublicKey             RsaSize         crypto/rsa/src/rsassa.rs:224
+   public key: verifies                     OneShotVerifyingKey             RsaPublicKey             RsaSize         crypto/rsa/src/rsassa.rs:247
+   private key: signs                       SignatureSigner                 RsaSigner                RsaSigningSize  crypto/rsa/src/rsassa.rs:268
+   private key: signs                       SignatureSigner                 RsaDeterministicSigner   RsaSigningSize  crypto/rsa/src/rsassa.rs:305
+   public key: verifies                     SignatureVerifier               RsaVerifier              RsaSize         crypto/rsa/src/rsassa.rs:338
+   public key: encapsulates or transports   KEMEncapsulator                 RsasveEncapsulator       RsaSigningSize  crypto/rsa/src/rsasve.rs:251
+   private key: decapsulates or recovers    KEMDecapsulator                 RsasveDecapsulator       RsaSigningSize  crypto/rsa/src/rsasve.rs:327
+   public key: encapsulates or transports   EncapsulatingKey                RsaKEMPublicKey          RsaSigningSize  crypto/rsa/src/rsasve.rs:382
+   private key: decapsulates or recovers    DecapsulatingKey                RsaKEMPrivateKey         RsaSigningSize  crypto/rsa/src/rsasve.rs:395
+   public key: encapsulates or transports   KEMEncapsulator                 RsasveKdfEncapsulator    RsaSigningSize  crypto/rsa/src/rsasve_kdf.rs:145
+   private key: decapsulates or recovers    KEMDecapsulator                 RsasveKdfDecapsulator    RsaSigningSize  crypto/rsa/src/rsasve_kdf.rs:217
+   public key: encapsulates or transports   EncapsulatingKey                RsaKEMPublicKey          RsaSigningSize  crypto/rsa/src/rsasve_kdf.rs:265
+   private key: decapsulates or recovers    DecapsulatingKey                RsaKEMPrivateKey         RsaSigningSize  crypto/rsa/src/rsasve_kdf.rs:289
+   encapsulating or transporting impls: 7, every one bounded by RsaSigningSize; bounded by RsaSize alone: 0
+
+-- 2. every other impl in the three key-establishment files, with its bound (naming and key plumbing)
+   crypto/rsa/src/rsaes_oaep.rs:148: RsaSize         impl (inherent) for RSAES_OAEP: -
+   crypto/rsa/src/rsaes_oaep.rs:166: RsaSize         impl Algorithm for RSAES_OAEP: -
+   crypto/rsa/src/rsaes_oaep.rs:171: RsaSize         impl KEMAlgorithm for RSAES_OAEP: -
+   crypto/rsa/src/rsaes_oaep.rs:173: RsaSize         impl KeyTransportAlgorithm for RSAES_OAEP: -
+   crypto/rsa/src/rsaes_oaep.rs:356: RsaSize         impl Algorithm for RsaOaepEncapsulator: -
+   crypto/rsa/src/rsaes_oaep.rs:405: RsaSize         impl Algorithm for RsaOaepDecapsulator: -
+   crypto/rsa/src/rsasve.rs:131: RsaSize         impl (inherent) for RsaKEMPublicKey: new, from_rsa_key, n, e
+   crypto/rsa/src/rsasve.rs:159: RsaSize         impl Display for RsaKEMPublicKey: fmt
+   crypto/rsa/src/rsasve.rs:174: RsaSigningSize  impl (inherent) for RsaKEMPrivateKey: from_crt_components, from_rsa_key, n, e
+   crypto/rsa/src/rsasve.rs:218: RsaSize         impl (inherent) for RSASVE: -
+   crypto/rsa/src/rsasve.rs:222: RsaSigningSize  impl (inherent) for RSASVE: keygen
+   crypto/rsa/src/rsasve.rs:234: RsaSize         impl Algorithm for RSASVE: -
+   crypto/rsa/src/rsasve.rs:239: RsaSize         impl KEMAlgorithm for RSASVE: -
+   crypto/rsa/src/rsasve.rs:246: RsaSize         impl Algorithm for RsasveEncapsulator: -
+   crypto/rsa/src/rsasve.rs:322: RsaSize         impl Algorithm for RsasveDecapsulator: -
+   crypto/rsa/src/rsasve.rs:353: RsaSigningSize  impl (inherent) for RsasveDecapsulator: recover_in_own_frame
+   crypto/rsa/src/rsasve.rs:408: RsaSigningSize  impl PrivateKey for RsaKEMPrivateKey: encode, encode_out, from_bytes
+   crypto/rsa/src/rsasve.rs:433: RsaSize         impl PublicKey for RsaKEMPublicKey: encode, encode_out, from_bytes
+   crypto/rsa/src/rsasve_kdf.rs:73: RsaSize         impl (inherent) for RSASVE_HKDF: -
+   crypto/rsa/src/rsasve_kdf.rs:80: RsaSize         impl Algorithm for RSASVE_HKDF: -
+   crypto/rsa/src/rsasve_kdf.rs:86: RsaSize         impl KEMAlgorithm for RSASVE_HKDF: -
+   crypto/rsa/src/rsasve_kdf.rs:138: RsaSize         impl Algorithm for RsasveKdfEncapsulator: -
+   crypto/rsa/src/rsasve_kdf.rs:176: RsaSigningSize  impl (inherent) for RsasveKdfEncapsulator: derive_in_own_frame
+   crypto/rsa/src/rsasve_kdf.rs:210: RsaSize         impl Algorithm for RsasveKdfDecapsulator: -
+   crypto/rsa/src/rsasve_kdf.rs:242: RsaSigningSize  impl (inherent) for RsasveKdfDecapsulator: derive_in_own_frame
+
+-- 3. every call of the raw primitives, with the bound it stands under
+   crypto/rsa/src/rsa_core.rs:40: K::public_exp                    in fn rsavp1                         fn bound: RsaSize         impl bound: -
+   crypto/rsa/src/rsa_core.rs:71: K::crt_exp                       in fn rsasp1                         fn bound: RsaSigningSize  impl bound: -
+   crypto/rsa/src/rsa_core.rs:198: crt_exp                          in fn crt_exp_checked_in_own_frame   fn bound: (none named)    impl bound: -
+   crypto/rsa/src/rsa_core.rs:201: public_exp                       in fn crt_exp_checked_in_own_frame   fn bound: (none named)    impl bound: -
+   crypto/rsa/src/rsaes_oaep.rs:245: K::public_exp                    in fn encrypt                        fn bound: RsaSigningSize  impl bound: -
+   crypto/rsa/src/rsaes_oaep.rs:309: K::crt_exp                       in fn decrypt_in_own_frame           fn bound: RsaSigningSize  impl bound: -
+   crypto/rsa/src/rsasve.rs:288: K::public_exp                    in fn encaps_out                     fn bound: (none named)    impl bound: RsaSigningSize
+   crypto/rsa/src/rsasve.rs:372: K::crt_exp                       in fn recover_in_own_frame           fn bound: RsaSize         impl bound: RsaSigningSize
+   crypto/rsa/src/size.rs:314: rsa_core::public_exp             in fn public_exp                     fn bound: (none named)    impl bound: RsaSize
+   crypto/rsa/src/size.rs:355: rsa_core::public_exp             in fn public_exp                     fn bound: (none named)    impl bound: RsaSize
+   crypto/rsa/src/size.rs:396: rsa_core::public_exp             in fn public_exp                     fn bound: (none named)    impl bound: RsaSize
+   crypto/rsa/src/size.rs:481: rsa_core::public_exp             in fn public_exp                     fn bound: (none named)    impl bound: RsaSize
+   crypto/rsa/src/size.rs:566: rsa_core::public_exp             in fn public_exp                     fn bound: (none named)    impl bound: RsaSize
+   crypto/rsa/src/size.rs:651: rsa_core::public_exp             in fn public_exp                     fn bound: (none named)    impl bound: RsaSize
+   rsa_core.rs: crt_exp_checked_in_own_frame: the result check of a private-key operation: reached from RsaSigningSize::crt_exp only
+   rsa_core.rs: rsavp1: signature verification: any size, by design (the crate's Scope)
+   rsaes_oaep.rs: encrypt: RSAES-OAEP-ENCRYPT: the function is bounded by RsaSigningSize
+   rsasve.rs: encaps_out: RSASVE.GENERATE: inside the impl bounded by RsaSigningSize
+   size.rs: public_exp: the size's own routing to rsa_core::public_exp: the public method (observation N14)
+
+-- 4. what remains at the verify-only sizes (observation N14)
+   crypto/rsa/src/size.rs:94: RsaSize::public_exp   (a public trait's method: callable at every size)
+   crypto/rsa/src/size.rs:313: RSA1024::public_exp   (a public trait's method: callable at every size)
+   crypto/rsa/src/size.rs:354: RSA1536::public_exp   (a public trait's method: callable at every size)
+   crypto/rsa/src/size.rs:395: RSA2048::public_exp   (a public trait's method: callable at every size)
+   crypto/rsa/src/size.rs:480: RSA3072::public_exp   (a public trait's method: callable at every size)
+   crypto/rsa/src/size.rs:565: RSA4096::public_exp   (a public trait's method: callable at every size)
+   crypto/rsa/src/size.rs:650: RSA8192::public_exp   (a public trait's method: callable at every size)
+
+ROLES SEARCH: AS STATED
+
+=== control: each search on a copy of the source with one edit
+   roles an encapsulating impl at every size: reported (1): rsasve.rs:251: KEMEncapsulator for RsasveEncapsulator is bounded by RsaSize
+   roles a new caller of the public primitive: reported (1): callers of public_exp: found but not in the audit's table: ('rsasve_kdf.rs', 'raw')
+control: 2 of 2 edits reported
+
+LISTED SEARCHES: ALL AS STATED, EVERY CONTROL EDIT REPORTED

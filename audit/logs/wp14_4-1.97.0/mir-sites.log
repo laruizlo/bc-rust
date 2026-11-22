@@ -1,0 +1,40 @@
+
+=== I1: where a key value is built, from the crate's MIR (rustc 1.97.0 (2d8144b78 2026-07-07), dev profile)
+   905 MIR bodies; aggregates of a key type: 17 statements in 15 functions
+   RsaKEMPrivateKey      in -::RsaKEMPrivateKey       constructor   (2 statements)
+   RsaKEMPrivateKey      in rsasve::clone                  derived
+   RsaKEMPrivateKey      in rsasve::from_rsa_key           written
+   RsaKEMPublicKey       in -::RsaKEMPublicKey        constructor   (2 statements)
+   RsaKEMPublicKey       in rsasve::clone                  derived
+   RsaKEMPublicKey       in rsasve::from_rsa_key           written
+   RsaPrivateComponents  in keys::clone_in_own_frame     written
+   RsaPrivateComponents  in keys::validated              written
+   RsaPrivateKey         in keys::clone                  written
+   RsaPrivateKey         in keys::from_components        written
+   RsaPrivateKey         in keys::key                    written
+   RsaPublicComponents   in keys::clone                  derived
+   RsaPublicComponents   in keys::new                    written
+   RsaPublicKey          in keys::clone                  written
+   RsaPublicKey          in keys::from_components        written
+   other value paths of a key type (`Type::<..>::function`): 108; a constructor used as a function value: 0
+   places inside a key that are assigned or borrowed mutably: 5 statements in 1 function
+   RsaPrivateComponents  in keys::validated              5 fields borrowed mutably
+
+MIR SITES: AS STATED
+
+=== control: the same reading on copies of the workspace with one edit each
+   the copy, unedited: as the table
+   a constructor that skips the checks: reported (1): an aggregate the table does not name: ('RsaPublicComponents', 'keys', 'unchecked', 'written')
+   a struct expression with generic arguments: reported (1): an aggregate the table does not name: ('RsaPublicComponents', 'keys', 'unchecked_e', 'written')
+   a tuple constructor outside from_rsa_key: reported (1): an aggregate the table does not name: ('RsaKEMPublicKey', '-', 'forged', 'written')
+   a tuple constructor passed as a function: reported (2): RsaKEMPublicKey: the constructor as a value in ('-', 'forged', 'written'): _3 = Option::<RsaPublicComponents<K>>::map::<RsaKEMPublicKey<K>, fn(RsaPubl
+   a tuple key written with braces: reported (1): an aggregate the table does not name: ('RsaKEMPublicKey', '-', 'forged', 'written')
+   a key written through an alias: reported (1): an aggregate the table does not name: ('RsaKEMPublicKey', '-', 'forged', 'written')
+   a key written through an associated type of the impl: reported (1): an aggregate the table does not name: ('RsaKEMPublicKey', 'size', 'generate_kem_key_pair::{closure#0}', 'written')
+   a field of a key assigned: reported (1): a place inside a key is written where the table names none: ('RsaPublicComponents', 'keys', 'with_e')
+   a limb of a key's modulus changed through an index: reported (1): a place inside a key is written where the table names none: ('RsaPublicComponents', 'keys', 'clear_low_bit')
+   the components of a KEM key replaced: reported (1): a place inside a key is written where the table names none: ('RsaKEMPublicKey', '-', 'swap_in')
+   a key written through an associated type of a parameter: reported (1): an aggregate the table does not name: ('RsaKEMPublicKey', '-', 'forged', 'written')
+control: 11 of 11 edits reported
+
+MIR SITES: THE COMPILER'S LIST IS THE TABLE'S, EVERY CONTROL EDIT REPORTED
