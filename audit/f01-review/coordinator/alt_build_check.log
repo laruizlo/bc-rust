@@ -1,0 +1,18 @@
+rustc 1.97.0 (2d8144b78 2026-07-07)
+variant (opt, lto, cgu, flags) | build | signcore rc jump addr  | control | ctsub | verdict
+o3-thin-default                | ok    | 9  3  0                | 9       | 0     | leak reported; controls hold
+o3-nolto-cgu16                 | ok    | 9  3  0                | 9       | 0     | leak reported; controls hold
+o2-nolto-cgu16                 | ok    | 9  2  0                | 9       | 0     | leak reported; controls hold
+o2-thin                        | ok    | 9  2  0                | 9       | 0     | leak reported; controls hold
+os-thin                        | ok    | 9  3  0                | 9       | 0     | leak reported; controls hold
+oz-thin                        | ok    | 9  4  0                | 9       | 0     | leak reported; controls hold
+o3-fat-cgu1                    | ok    | 9  3  0                | 9       | 0     | leak reported; controls hold
+./alt_build_check.sh: line 39:  6307 Illegal instruction     valgrind -q --error-exitcode=9 "$T/memcheck_harness" "$mode" > "$T/vg-$mode.log" 2>&1
+./alt_build_check.sh: line 39:  6308 Illegal instruction     valgrind -q --error-exitcode=9 "$T/memcheck_harness" "$mode" > "$T/vg-$mode.log" 2>&1
+./alt_build_check.sh: line 39:  6309 Illegal instruction     valgrind -q --error-exitcode=9 "$T/memcheck_harness" "$mode" > "$T/vg-$mode.log" 2>&1
+o3-thin-native                 | ok    | 132  0  0              | 132     | 132   | VOID: a control did not behave
+o1-thin                        | ok    | 9  2  0                | 9       | 0     | leak reported; controls hold
+
+real	1m0.262s
+user	1m20.991s
+sys	0m8.250s

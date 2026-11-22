@@ -1,0 +1,18 @@
+[package]
+name = "f01_harness_a"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "f01a"
+path = "src/main.rs"
+
+[dependencies]
+bouncycastle-rsa = { path = "/home/claude/f01-review/src/crypto/rsa" }
+bouncycastle-ec = { path = "/home/claude/f01-review/src/crypto/ec" }
+bouncycastle-utils = { path = "/home/claude/f01-review/src/crypto/utils" }
+
+# Own workspace root, so this harness is not pulled in as a member of the snapshot's workspace
+# (and never writes into it).
+[workspace]

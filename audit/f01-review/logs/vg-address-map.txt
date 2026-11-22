@@ -1,0 +1,5 @@
+inferred load base = 0x485a000
+  fault 0x4870276 -> file offset 0x16276 -> Site1 (pow2_mod 64L / R)  borrow-branch je (cmpq $0,borrow ; je)
+  fault 0x48704f7 -> file offset 0x164f7 -> Site2 (pow2_mod 128L / R^2) carry-branch je (cmp $1,%r14 ; je)
+  fault 0x4870506 -> file offset 0x16506 -> Site2 (pow2_mod 128L / R^2) borrow-branch je (cmpq $0,borrow ; je)
+All three memcheck conditional-jump faults are double_mod_n selects over the secret modulus.

@@ -1,0 +1,18 @@
+# The declassification register (plan section 5.5 step 1): the points where a bit derived from
+# a secret decides control flow by design. A whole-operation memcheck mode is judged against
+# it: every report must be one of these lines, or the mode is "reported".
+#
+# One entry per line, fields separated by " | ":
+#   id | status | file under crypto/ | anchor | via | reason
+# anchor   a piece of source text that occurs exactly once in the file; its line number is
+#          looked up at run time, so the register survives line drift and fails loudly if the
+#          text is gone.
+# via      files whose frames may lie below the anchor in a report (helpers inlined into it).
+#          A report is an entry's only if every frame inside the anchor's is in one of them:
+#          a branch somewhere under a call made on the anchor line is not excused by it.
+# status   argued  the argument that the bit tells an observer nothing is written (reason)
+#          open    it is not: the entry names where the question is tracked
+D1 | argued | rsa/src/rsa_core.rs | if !K::crt_exp(sk, m, &mut s).to_bool() { | utils/src/ct.rs | rsasp1 branches on the outcome of the result check. Plan C8: under a sound key the check passes for every input, so the outcome is a constant of the key's soundness, not of the input or of which key
+D2 | argued | rsa/src/rsasve.rs | if !K::crt_exp(&self.sk.0, &c, &mut z).to_bool() { | utils/src/ct.rs | RSASVE recovery branches on the same outcome. Plan C8
+D3 | argued | rsa/src/eme_oaep.rs | if value_barrier(bad) != 0 { | utils/src/ct.rs | decode_out's one visible outcome, the decryption error or the length: what the caller is told in any case (RFC 8017 7.1.2 step 3.g; plan E9)
+D4 | open | rsa/src/rsaes_oaep.rs | match key.set_bytes_as_type(bytes, KeyType::CryptographicRandom) { | core/src/key_material.rs,utils/src/ct.rs,utils/src/secret.rs | key_into types an all-zero recovered key as Zeroized through a branch in KeyMaterial. Plan gap G16: not yet argued

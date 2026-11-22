@@ -1,0 +1,7 @@
+==4040== Conditional jump or move depends on uninitialised value(s)
+==4040==    at 0x486FE05: f01_control_vartime (in /home/claude/f01-review/work/target/release/libf01b.so)
+==4040==    by 0x109780: main (memcheck_harness.c:42)
+==4040==  Uninitialised value was created by a client request
+==4040==    at 0x109679: main (memcheck_harness.c:36)
+==4040== 
+control done (digest d111111111111111)

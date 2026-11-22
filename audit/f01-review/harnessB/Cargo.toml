@@ -1,0 +1,23 @@
+[package]
+name = "f01_harness_b"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "f01b"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+bouncycastle-rsa = { path = "/home/claude/f01-review/src/crypto/rsa" }
+bouncycastle-ec = { path = "/home/claude/f01-review/src/crypto/ec" }
+bouncycastle-utils = { path = "/home/claude/f01-review/src/crypto/utils" }
+
+# The workspace's own release profile, copied verbatim from the snapshot's root Cargo.toml so the
+# codegen matches what the crate ships. (Our own workspace root, so we don't join the snapshot's.)
+[profile.release]
+lto = "thin"
+strip = "debuginfo"
+
+[workspace]

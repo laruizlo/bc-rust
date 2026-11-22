@@ -1,0 +1,9 @@
+PASS lemma-identities   : b-sequence equals binary expansion of floor(2^i/n) (small-n check)
+  trial 0: interval width =  1  p in interval = True  unique divisor of n in interval == p = True
+  trial 1: interval width =  1  p in interval = True  unique divisor of n in interval == p = True
+  trial 2: interval width =  1  p in interval = True  unique divisor of n in interval == p = True
+  trial 3: interval width =  1  p in interval = True  unique divisor of n in interval == p = True
+  trial 4: interval width =  1  p in interval = True  unique divisor of n in interval == p = True
+PASS recover-prime-R2    : floor(2^128L/p) from the R^2 decision bits + public n recovers p
+INFO R-only call         : floor(2^64L/p) interval width ~ 2^1023 (leak is carried by the R^2 call, not this one)
+ALL-PASS

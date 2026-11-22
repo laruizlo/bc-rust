@@ -1,0 +1,16 @@
+fn double_mod_n<const L: usize>(a: &[u64; L], n: &[u64; L]) -> [u64; L] {
+    let (doubled, carry) = nat::add(a, a);
+    let (diff, borrow) = nat::sub(&doubled, n);
+    if carry == 1 || borrow == 0 { diff } else { doubled }
+}
+
+/// `2^bits mod n` for odd `n`, by `bits` repeated doublings from `1`. Variable time, like
+/// `double_mod_n`: the modulus is public.
+fn pow2_mod<const L: usize>(bits: u32, n: &[u64; L]) -> [u64; L] {
+    let mut acc = [0u64; L];
+    acc[0] = 1;
+    for _ in 0..bits {
+        acc = double_mod_n(&acc, n);
+    }
+    acc
+}

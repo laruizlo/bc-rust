@@ -1,0 +1,5 @@
+PASS faithful-mont_n_prime : copy::mont_n_prime == real::mont_n_prime over 50k odd words
+PASS faithful-mod_pow      : copy::mod_pow == real::mod_pow (L=16) over 1200 inputs on p and q
+PASS branch-count          : new(p)/new(q) each select 3072 times (1024 for R + 2048 for R^2)
+INFO emitted             : recover_input.txt (n, p, q, and the R^2 decision bits of new(p)/new(q))
+HARNESS-A-ALL-PASS

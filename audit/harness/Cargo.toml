@@ -1,0 +1,45 @@
+# Audit harness for crypto/rsa: the crate's own source files, compiled by path and unmodified,
+# with access to their crate-private and private functions for differential testing against
+# audit/ref/rsa_ref.py. Its own workspace, so the root `cargo build --workspace` never builds it,
+# and nothing here is published.
+[package]
+name = "rsa_audit_harness"
+version = "0.0.0"
+edition = "2024"
+publish = false
+build = "build.rs"
+
+[lib]
+# The included files carry upstream's doc examples, which name `bouncycastle_rsa`.
+doctest = false
+
+[dependencies]
+# The crate's own dependencies at the pin (crypto/rsa/Cargo.toml), by path. SHA-1 is
+# `bouncycastle_digest::sha1` since the release/0.1.4alpha merge; `bouncycastle-rng` is a
+# dev-dependency upstream (its unit tests and ours use it).
+bouncycastle-core = { path = "../../crypto/core" }
+bouncycastle-digest = { path = "../../crypto/digest" }
+bouncycastle-ec = { path = "../../crypto/ec" }
+bouncycastle-hkdf = { path = "../../crypto/hkdf" }
+bouncycastle-hmac = { path = "../../crypto/hmac" }
+bouncycastle-rng = { path = "../../crypto/rng" }
+bouncycastle-sha2 = { path = "../../crypto/sha2" }
+bouncycastle-sha3 = { path = "../../crypto/sha3" }
+bouncycastle-utils = { path = "../../crypto/utils" }
+
+[build-dependencies]
+sha2 = "0.10"
+
+# As the root manifest's release profile, so a release run here is the shipped configuration.
+[profile.release]
+lto = "thin"
+strip = "debuginfo"
+
+# For `ct_memcheck` under Valgrind: the release configuration plus line tables, so memcheck's
+# reports name source lines.
+[profile.memcheck]
+inherits = "release"
+debug = "line-tables-only"
+strip = "none"
+
+[workspace]

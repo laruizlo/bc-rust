@@ -1,0 +1,4 @@
+  p: Q==floor(2^T/p)=True  interval width=1  recovered==p: True
+  q: Q==floor(2^T/q)=True  interval width=1  recovered==q: True
+PASS recover-real-code   : p and q recovered from the real new()'s R^2 branch decisions
+RECOVER-ALL-PASS

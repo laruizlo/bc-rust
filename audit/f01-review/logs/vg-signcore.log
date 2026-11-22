@@ -1,0 +1,19 @@
+==4039== Conditional jump or move depends on uninitialised value(s)
+==4039==    at 0x4870276: f01_sign_core (in /home/claude/f01-review/work/target/release/libf01b.so)
+==4039==    by 0x109745: main (memcheck_harness.c:40)
+==4039==  Uninitialised value was created by a client request
+==4039==    at 0x109679: main (memcheck_harness.c:36)
+==4039== 
+==4039== Conditional jump or move depends on uninitialised value(s)
+==4039==    at 0x4870506: f01_sign_core (in /home/claude/f01-review/work/target/release/libf01b.so)
+==4039==    by 0x109745: main (memcheck_harness.c:40)
+==4039==  Uninitialised value was created by a client request
+==4039==    at 0x109679: main (memcheck_harness.c:36)
+==4039== 
+==4039== Conditional jump or move depends on uninitialised value(s)
+==4039==    at 0x48704F7: f01_sign_core (in /home/claude/f01-review/work/target/release/libf01b.so)
+==4039==    by 0x109745: main (memcheck_harness.c:40)
+==4039==  Uninitialised value was created by a client request
+==4039==    at 0x109679: main (memcheck_harness.c:36)
+==4039== 
+signcore done (digest 5c7f97e40a9019b2)

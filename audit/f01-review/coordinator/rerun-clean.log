@@ -1,0 +1,14 @@
+------------------------------------------------------------
+lemma          PASS
+faithful       PASS
+recover-real   PASS
+asm-branch     PASS
+vg-signcore    PASS
+vg-control     PASS
+vg-ctsub       PASS
+------------------------------------------------------------
+ALL CHECKS PASS
+
+real	0m18.428s
+user	0m24.391s
+sys	0m1.818s
